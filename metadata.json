@@ -1,0 +1,6 @@
+{
+  "name": "Minimalist E-Commerce Store",
+  "description": "A professional and minimalistic e-commerce store featuring men's clothing, women's clothing, and home decor with smooth hover animations and rounded corner image boxes.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
