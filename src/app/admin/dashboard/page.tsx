@@ -5,20 +5,20 @@ import { useRouter } from "next/navigation";
 import { Sparkles, Check } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 
-import { Product, Order, CategoryItem, ExpenseItem, DiscountCoupon } from "../../types";
-import { PRODUCTS, DEFAULT_CATEGORIES, DEFAULT_EXPENSES, DEFAULT_ORDERS, DEFAULT_COUPONS } from "../../data";
+import { Product, Order, CategoryItem, ExpenseItem, DiscountCoupon } from "../../../types";
+import { PRODUCTS, DEFAULT_CATEGORIES, DEFAULT_EXPENSES, DEFAULT_ORDERS, DEFAULT_COUPONS } from "../../../data";
 
 // Subcomponents
-import Sidebar from "../../components/dashboard/Sidebar";
-import OverviewTab from "../../components/dashboard/OverviewTab";
-import ProductsTab from "../../components/dashboard/ProductsTab";
-import CategoriesTab from "../../components/dashboard/CategoriesTab";
-import OrdersTab from "../../components/dashboard/OrdersTab";
-import CustomersTab from "../../components/dashboard/CustomersTab";
-import FinanceTab from "../../components/dashboard/FinanceTab";
-import DiscountsTab from "../../components/dashboard/DiscountsTab";
-import ReviewsTab from "../../components/dashboard/ReviewsTab";
-import SettingsTab from "../../components/dashboard/SettingsTab";
+import Sidebar from "../../../components/dashboard/Sidebar";
+import OverviewTab from "../../../components/dashboard/OverviewTab";
+import ProductsTab from "../../../components/dashboard/ProductsTab";
+import CategoriesTab from "../../../components/dashboard/CategoriesTab";
+import OrdersTab from "../../../components/dashboard/OrdersTab";
+import CustomersTab from "../../../components/dashboard/CustomersTab";
+import FinanceTab from "../../../components/dashboard/FinanceTab";
+import DiscountsTab from "../../../components/dashboard/DiscountsTab";
+import ReviewsTab from "../../../components/dashboard/ReviewsTab";
+import SettingsTab from "../../../components/dashboard/SettingsTab";
 
 export type DashboardTab =
   | "overview"
@@ -52,7 +52,7 @@ export default function DashboardPage() {
     setIsMounted(true);
     const token = localStorage.getItem("admin_token");
     if (token !== "atelier_secret_token_val") {
-      router.push("/login");
+      router.push("/admin/login");
     } else {
       setIsAuthenticated(true);
     }
@@ -134,7 +134,7 @@ export default function DashboardPage() {
 
   const handleLogout = () => {
     localStorage.removeItem("admin_token");
-    router.push("/login");
+    router.push("/admin/login");
   };
 
   if (!isMounted || !isAuthenticated) {

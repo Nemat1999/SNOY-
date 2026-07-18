@@ -428,7 +428,7 @@ export default function Page() {
 
             {/* Admin Dashboard Access Link */}
             <Link
-              href="/dashboard"
+              href="/admin/dashboard"
               className="rounded-full p-2 text-stone-700 hover:bg-stone-50 hover:text-stone-900 transition-all active:scale-95 ml-0.5"
               title="Admin Dashboard"
             >

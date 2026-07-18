@@ -17,7 +17,7 @@ export default function LoginPage() {
   useEffect(() => {
     const token = localStorage.getItem("admin_token");
     if (token === "atelier_secret_token_val") {
-      router.push("/dashboard");
+      router.push("/admin/dashboard");
     }
   }, [router]);
 
@@ -30,7 +30,7 @@ export default function LoginPage() {
     setTimeout(() => {
       if (username.trim().toLowerCase() === "admin" && password === "admin") {
         localStorage.setItem("admin_token", "atelier_secret_token_val");
-        router.push("/dashboard");
+        router.push("/admin/dashboard");
       } else {
         setError("Invalid credentials. Use 'admin' for both fields.");
         setIsLoading(false);

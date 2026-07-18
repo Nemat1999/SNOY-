@@ -3,7 +3,7 @@
 import React from "react";
 import { LayoutDashboard, Package, Tag, ShoppingCart, Users, TrendingUp, Percent, MessageSquare, Settings, LogOut } from "lucide-react";
 import { motion } from "motion/react";
-import { DashboardTab } from "../../app/dashboard/page";
+import { DashboardTab } from "../../app/admin/dashboard/page";
 
 interface SidebarProps {
   activeTab: DashboardTab;
