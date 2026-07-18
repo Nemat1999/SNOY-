@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import Link from "next/link";
 import { motion, AnimatePresence } from "motion/react";
 import {
   ShoppingBag,
@@ -21,24 +22,27 @@ import {
   Instagram,
   Facebook,
   Twitter,
-  ExternalLink
+  ExternalLink,
+  Lock
 } from "lucide-react";
 
-import { Category, Product, CartItem, Order, Review } from "../types";
-import { PRODUCTS } from "../data";
+import { Category, Product, CartItem, Order, Review, CategoryItem } from "../types";
+import { PRODUCTS, DEFAULT_ORDERS } from "../data";
 import ProductCard from "../components/ProductCard";
 import ProductDetailModal from "../components/ProductDetailModal";
 import CartDrawer from "../components/CartDrawer";
 import CheckoutModal from "../components/CheckoutModal";
 import AiStylist from "../components/AiStylist";
 
+
 export default function Page() {
   const [products, setProducts] = useState<Product[]>(PRODUCTS);
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [wishlist, setWishlist] = useState<string[]>([]);
-  const [orders, setOrders] = useState<Order[]>([]);
+  const [orders, setOrders] = useState<Order[]>(DEFAULT_ORDERS);
   const [recentlyViewed, setRecentlyViewed] = useState<Product[]>([]);
   const [isMounted, setIsMounted] = useState(false);
+  const [categories, setCategories] = useState<CategoryItem[]>([]);
 
   // --- UI STATE ---
   const [selectedCategory, setSelectedCategory] = useState<Category>("All");
@@ -67,8 +71,22 @@ export default function Page() {
   // Load from localStorage only on client after mounting
   useEffect(() => {
     setIsMounted(true);
-    const savedProducts = localStorage.getItem("minimal_products");
-    if (savedProducts) setProducts(JSON.parse(savedProducts));
+
+    const dbVersion = localStorage.getItem("minimal_db_version_v2");
+    if (dbVersion !== "3") {
+      localStorage.setItem("minimal_products", JSON.stringify(PRODUCTS));
+      localStorage.setItem("minimal_orders", JSON.stringify(DEFAULT_ORDERS));
+      localStorage.setItem("minimal_db_version_v2", "3");
+
+      setProducts(PRODUCTS);
+      setOrders(DEFAULT_ORDERS);
+    } else {
+      const savedProducts = localStorage.getItem("minimal_products");
+      if (savedProducts) setProducts(JSON.parse(savedProducts));
+
+      const savedOrders = localStorage.getItem("minimal_orders");
+      setOrders(savedOrders ? JSON.parse(savedOrders) : DEFAULT_ORDERS);
+    }
 
     const savedCart = localStorage.getItem("minimal_cart");
     if (savedCart) setCartItems(JSON.parse(savedCart));
@@ -76,8 +94,16 @@ export default function Page() {
     const savedWishlist = localStorage.getItem("minimal_wishlist");
     if (savedWishlist) setWishlist(JSON.parse(savedWishlist));
 
-    const savedOrders = localStorage.getItem("minimal_orders");
-    if (savedOrders) setOrders(JSON.parse(savedOrders));
+    const savedCategories = localStorage.getItem("minimal_categories");
+    if (savedCategories) {
+      setCategories(JSON.parse(savedCategories));
+    } else {
+      setCategories([
+        { id: "cat-1", name: "Men's Clothing", description: "" },
+        { id: "cat-2", name: "Women's Clothing", description: "" },
+        { id: "cat-3", name: "Home Decor", description: "" }
+      ]);
+    }
   }, []);
 
   // --- STORAGE SYNCS (only sync after mounted) ---
@@ -309,23 +335,40 @@ export default function Page() {
 
           {/* Desktop Nav Categories */}
           <nav className="hidden md:flex gap-8 text-xs font-semibold uppercase tracking-widest text-stone-500">
-            {(["All", "Men's Clothing", "Women's Clothing", "Home Decor"] as Category[]).map((cat) => (
+            <button
+              onClick={() => {
+                setSelectedCategory("All");
+                document.getElementById("showroom")?.scrollIntoView({ behavior: "smooth" });
+              }}
+              className={`relative py-1.5 transition-colors hover:text-stone-900 cursor-pointer ${
+                selectedCategory === "All" ? "text-stone-955 font-bold" : ""
+              }`}
+            >
+              All
+              {selectedCategory === "All" && (
+                <motion.span
+                  layoutId="activeCategoryUnderline"
+                  className="absolute bottom-0 left-0 h-0.5 w-full bg-stone-950"
+                />
+              )}
+            </button>
+            {categories.map((cat) => (
               <button
-                key={cat}
+                key={cat.id}
                 onClick={() => {
-                  setSelectedCategory(cat);
+                  setSelectedCategory(cat.name);
                   // Scroll smoothly to shop section
                   document.getElementById("showroom")?.scrollIntoView({ behavior: "smooth" });
                 }}
                 className={`relative py-1.5 transition-colors hover:text-stone-900 cursor-pointer ${
-                  selectedCategory === cat ? "text-stone-955 font-bold" : ""
+                  selectedCategory === cat.name ? "text-stone-955 font-bold" : ""
                 }`}
               >
-                {cat}
-                {selectedCategory === cat && (
+                {cat.name}
+                {selectedCategory === cat.name && (
                   <motion.span
                     layoutId="activeCategoryUnderline"
-                    className="absolute bottom-0 left-0 h-0.5 w-full bg-stone-950"
+                    className="absolute bottom-0 left-0 h-0.5 w-full bg-stone-955"
                   />
                 )}
               </button>
@@ -382,6 +425,15 @@ export default function Page() {
                 </span>
               )}
             </button>
+
+            {/* Admin Dashboard Access Link */}
+            <Link
+              href="/dashboard"
+              className="rounded-full p-2 text-stone-700 hover:bg-stone-50 hover:text-stone-900 transition-all active:scale-95 ml-0.5"
+              title="Admin Dashboard"
+            >
+              <Lock className="h-4.5 w-4.5" />
+            </Link>
           </div>
         </div>
       </header>
@@ -527,15 +579,23 @@ export default function Page() {
                 <div>
                   <h4 className="text-xs font-bold uppercase tracking-wider text-stone-800 mb-3">Filter by Category</h4>
                   <div className="flex flex-wrap gap-2">
-                    {(["All", "Men's Clothing", "Women's Clothing", "Home Decor"] as Category[]).map((cat) => (
+                    <button
+                      onClick={() => setSelectedCategory("All")}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                        selectedCategory === "All" ? "bg-stone-900 text-white font-bold" : "bg-stone-100 text-stone-600 hover:bg-stone-200"
+                      }`}
+                    >
+                      All
+                    </button>
+                    {categories.map((cat) => (
                       <button
-                        key={cat}
-                        onClick={() => setSelectedCategory(cat)}
+                        key={cat.id}
+                        onClick={() => setSelectedCategory(cat.name)}
                         className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                          selectedCategory === cat ? "bg-stone-900 text-white font-bold" : "bg-stone-100 text-stone-600 hover:bg-stone-200"
+                          selectedCategory === cat.name ? "bg-stone-900 text-white font-bold" : "bg-stone-100 text-stone-600 hover:bg-stone-200"
                         }`}
                       >
-                        {cat}
+                        {cat.name}
                       </button>
                     ))}
                   </div>
@@ -791,10 +851,14 @@ export default function Page() {
           <div>
             <h4 className="text-[10px] font-bold uppercase tracking-wider text-stone-800 mb-3.5">Categories</h4>
             <ul className="space-y-2 font-medium">
-              <li><button onClick={() => { setSelectedCategory("Men's Clothing"); }} className="hover:text-stone-900">Men's Capsule</button></li>
-              <li><button onClick={() => { setSelectedCategory("Women's Clothing"); }} className="hover:text-stone-900">Women's Collection</button></li>
-              <li><button onClick={() => { setSelectedCategory("Home Decor"); }} className="hover:text-stone-900">Sculptural Home Decor</button></li>
               <li><button onClick={() => { setSelectedCategory("All"); }} className="hover:text-stone-900">Full Catalog</button></li>
+              {categories.map((cat) => (
+                <li key={cat.id}>
+                  <button onClick={() => { setSelectedCategory(cat.name); }} className="hover:text-stone-900">
+                    {cat.name}
+                  </button>
+                </li>
+              ))}
             </ul>
           </div>
 

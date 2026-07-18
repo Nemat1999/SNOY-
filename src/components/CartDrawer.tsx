@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { X, ShoppingBag, Trash2, Plus, Minus, Tag, Check, Truck } from "lucide-react";
-import { CartItem } from "../types";
+import { CartItem, DiscountCoupon } from "../types";
 
 interface CartDrawerProps {
   isOpen: boolean;
@@ -40,6 +40,40 @@ export default function CartDrawer({
     e.preventDefault();
     setPromoError("");
     const trimmed = promoCode.trim().toUpperCase();
+
+    // Look up coupon dynamically in localStorage
+    if (typeof window !== "undefined") {
+      const savedCouponsStr = localStorage.getItem("minimal_coupons");
+      if (savedCouponsStr) {
+        try {
+          const savedCoupons: DiscountCoupon[] = JSON.parse(savedCouponsStr);
+          const match = savedCoupons.find((c) => c.code === trimmed);
+
+          if (match) {
+            if (!match.active) {
+              setPromoError("This coupon code has expired");
+              return;
+            }
+            if (match.minSpend && subtotal < match.minSpend) {
+              setPromoError(`Minimum spend of $${match.minSpend} required`);
+              return;
+            }
+            setPromoApplied(true);
+            if (match.type === "percentage") {
+              setDiscountPercent(match.value);
+            } else {
+              const calculatedPercent = (match.value / subtotal) * 100;
+              setDiscountPercent(calculatedPercent);
+            }
+            setPromoCode("");
+            return;
+          }
+        } catch (err) {
+          console.error("Error parsing coupons from localStorage:", err);
+        }
+      }
+    }
+
     if (trimmed === "MINIMAL20") {
       setPromoApplied(true);
       setDiscountPercent(20);

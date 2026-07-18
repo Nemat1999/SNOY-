@@ -309,6 +309,12 @@ export default function ProductDetailModal({
                             <p className="mt-1.5 text-xs text-stone-600 font-normal leading-relaxed">
                               {rev.text}
                             </p>
+                            {rev.reply && (
+                              <div className="mt-2 ml-3.5 p-2.5 rounded-lg bg-stone-50 border-l border-stone-850 text-[10px] text-stone-600 leading-normal">
+                                <span className="font-bold text-stone-900 block mb-0.5 text-[8px] uppercase tracking-widest">Atelier Response:</span>
+                                {rev.reply}
+                              </div>
+                            )}
                           </div>
                         ))
                       ) : (

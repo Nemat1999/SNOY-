@@ -1,4 +1,4 @@
-import { Product } from "./types";
+import { Product, CategoryItem, ExpenseItem, Order, DiscountCoupon } from "./types";
 
 export const PRODUCTS: Product[] = [
   // --- MEN'S CLOTHING ---
@@ -395,3 +395,423 @@ export const PRODUCTS: Product[] = [
     ]
   }
 ];
+
+export const DEFAULT_CATEGORIES: CategoryItem[] = [
+  {
+    id: "cat-1",
+    name: "Men's Clothing",
+    description: "Tailored garments, classic shapes, and high-density textures designed for durability.",
+  },
+  {
+    id: "cat-2",
+    name: "Women's Clothing",
+    description: "Structured tailoring and organic cotton layers displaying simple sculptural elegance.",
+  },
+  {
+    id: "cat-3",
+    name: "Home Decor",
+    description: "Architectural travertine elements, handmade stoneware, and curated ambient home decorations.",
+  },
+];
+
+export const DEFAULT_EXPENSES: ExpenseItem[] = [
+  {
+    id: "exp-1",
+    date: "2026-07-10",
+    category: "Inventory",
+    amount: 1200,
+    description: "Restocked heavyweight wool outerwear and travertine stone blocks",
+  },
+  {
+    id: "exp-2",
+    date: "2026-07-12",
+    category: "Marketing",
+    amount: 450,
+    description: "Social media visual catalog sponsored advertising",
+  },
+  {
+    id: "exp-3",
+    date: "2026-07-14",
+    category: "Logistics",
+    amount: 280,
+    description: "Eco-friendly recyclable cardboard box shipping supplies",
+  },
+  {
+    id: "exp-4",
+    date: "2026-07-15",
+    category: "Software",
+    amount: 85,
+    description: "Domain name hosting and secure database server subscriptions",
+  },
+  {
+    id: "exp-5",
+    date: "2026-07-16",
+    category: "Salaries",
+    amount: 950,
+    description: "Fulfillment center staffing weekly shifts",
+  },
+];
+
+export const DEFAULT_ORDERS: Order[] = [
+  {
+    id: "ord-8291",
+    date: "2026-07-15",
+    items: [
+      {
+        productName: "Minimalist Wool Trench Coat",
+        price: 320,
+        quantity: 1,
+        image: "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?q=80&w=600&auto=format&fit=crop",
+        size: "M",
+        color: "Charcoal",
+      },
+      {
+        productName: "Organic Heavyweight Tee",
+        price: 48,
+        quantity: 2,
+        image: "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?q=80&w=600&auto=format&fit=crop",
+        size: "L",
+        color: "Off-White",
+      },
+    ],
+    subtotal: 416,
+    shipping: 0,
+    total: 416,
+    shippingAddress: {
+      fullName: "Liam Anderson",
+      email: "liam.anderson@example.com",
+      address: "148 West 23rd St, Apt 4B",
+      city: "New York",
+      postalCode: "10011",
+      country: "United States",
+    },
+    status: "Delivered",
+  },
+  {
+    id: "ord-4721",
+    date: "2026-07-16",
+    items: [
+      {
+        productName: "Japanese Selvedge Denim",
+        price: 185,
+        quantity: 1,
+        image: "https://images.unsplash.com/photo-1542272604-787c3835535d?q=80&w=600&auto=format&fit=crop",
+        size: "32",
+        color: "Indigo Raw",
+      },
+    ],
+    subtotal: 185,
+    shipping: 15,
+    total: 200,
+    shippingAddress: {
+      fullName: "Sophia Martinez",
+      email: "sophia.mtz@example.com",
+      address: "782 Peachtree St NE",
+      city: "Atlanta",
+      postalCode: "30308",
+      country: "United States",
+    },
+    status: "Shipped",
+  },
+  {
+    id: "ord-3942",
+    date: "2026-07-17",
+    items: [
+      {
+        productName: "Travertine Stone Pedestal Set",
+        price: 110,
+        quantity: 2,
+        image: "https://images.unsplash.com/photo-1583847268964-b28dc8f51f92?q=80&w=600&auto=format&fit=crop",
+      },
+    ],
+    subtotal: 220,
+    shipping: 0,
+    total: 220,
+    shippingAddress: {
+      fullName: "Marcus Vance",
+      email: "marcus.v@example.com",
+      address: "1205 Pine St",
+      city: "Seattle",
+      postalCode: "98101",
+      country: "United States",
+    },
+    status: "Processing",
+  },
+  {
+    id: "ord-9012",
+    date: "2026-07-12",
+    items: [
+      {
+        productName: "Sculptural Matte Desk Lamp",
+        price: 165,
+        quantity: 1,
+        image: "https://images.unsplash.com/photo-1507473885765-e6ed057f782c?q=80&w=600&auto=format&fit=crop",
+      },
+      {
+        productName: "Handmade Ribbed Ceramic Vase",
+        price: 65,
+        quantity: 1,
+        image: "https://images.unsplash.com/photo-1612196808214-b8e1d6145a8c?q=80&w=600&auto=format&fit=crop",
+      }
+    ],
+    subtotal: 230,
+    shipping: 0,
+    total: 230,
+    shippingAddress: {
+      fullName: "Elena Rostova",
+      email: "elena.rostova@example.com",
+      address: "248 Commonwealth Ave",
+      city: "Boston",
+      postalCode: "02116",
+      country: "United States",
+    },
+    status: "Delivered",
+  },
+  {
+    id: "ord-7154",
+    date: "2026-07-14",
+    items: [
+      {
+        productName: "Premium Merino Mock-Neck",
+        price: 135,
+        quantity: 1,
+        image: "https://images.unsplash.com/photo-1614975058789-41316d0e2e9c?q=80&w=600&auto=format&fit=crop",
+        size: "M",
+        color: "Heather Gray",
+      },
+      {
+        productName: "Handmade Ribbed Ceramic Vase",
+        price: 65,
+        quantity: 1,
+        image: "https://images.unsplash.com/photo-1612196808214-b8e1d6145a8c?q=80&w=600&auto=format&fit=crop",
+      }
+    ],
+    subtotal: 200,
+    shipping: 0,
+    total: 200,
+    shippingAddress: {
+      fullName: "Julian Krogh",
+      email: "julian.krogh@example.com",
+      address: "612 N Michigan Ave",
+      city: "Chicago",
+      postalCode: "60611",
+      country: "United States",
+    },
+    status: "Delivered",
+  },
+  {
+    id: "ord-6190",
+    date: "2026-07-17",
+    items: [
+      {
+        productName: "Handmade Ribbed Ceramic Vase",
+        price: 65,
+        quantity: 1,
+        image: "https://images.unsplash.com/photo-1612196808214-b8e1d6145a8c?q=80&w=600&auto=format&fit=crop",
+      },
+      {
+        productName: "Organic Heavyweight Tee",
+        price: 48,
+        quantity: 1,
+        image: "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?q=80&w=600&auto=format&fit=crop",
+        size: "S",
+        color: "Ink Black",
+      }
+    ],
+    subtotal: 113,
+    shipping: 10,
+    total: 123,
+    shippingAddress: {
+      fullName: "Yuki Tanaka",
+      email: "yuki.tanaka@example.com",
+      address: "2201 Fillmore St",
+      city: "San Francisco",
+      postalCode: "94115",
+      country: "United States",
+    },
+    status: "Processing",
+  },
+  {
+    id: "ord-1042",
+    date: "2026-07-18",
+    items: [
+      {
+        productName: "Organic Heavyweight Tee",
+        price: 48,
+        quantity: 1,
+        image: "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?q=80&w=600&auto=format&fit=crop",
+        size: "M",
+        color: "Sage",
+      }
+    ],
+    subtotal: 48,
+    shipping: 10,
+    total: 58,
+    shippingAddress: {
+      fullName: "Emily Watson",
+      email: "emily.w@example.com",
+      address: "742 Evergreen Terrace",
+      city: "Springfield",
+      postalCode: "62704",
+      country: "United States",
+    },
+    status: "Processing",
+  },
+  {
+    id: "ord-2983",
+    date: "2026-07-17",
+    items: [
+      {
+        productName: "Minimalist Wool Trench Coat",
+        price: 320,
+        quantity: 1,
+        image: "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?q=80&w=600&auto=format&fit=crop",
+        size: "L",
+        color: "Camel",
+      }
+    ],
+    subtotal: 320,
+    shipping: 0,
+    total: 320,
+    shippingAddress: {
+      fullName: "David Kim",
+      email: "david.kim@example.com",
+      address: "1042 Wilshire Blvd",
+      city: "Los Angeles",
+      postalCode: "90024",
+      country: "United States",
+    },
+    status: "Shipped",
+  },
+  {
+    id: "ord-5591",
+    date: "2026-07-15",
+    items: [
+      {
+        productName: "Minimalist Wool Trench Coat",
+        price: 320,
+        quantity: 2,
+        image: "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?q=80&w=600&auto=format&fit=crop",
+        size: "M",
+        color: "Charcoal",
+      },
+      {
+        productName: "Classic Belted Trench Coat",
+        price: 295,
+        quantity: 1,
+        image: "https://images.unsplash.com/photo-1591047139829-d91aecb6caea?q=80&w=600&auto=format&fit=crop",
+        size: "S",
+        color: "Beige Khaki",
+      },
+      {
+        productName: "Silk Drape Wrap Dress",
+        price: 245,
+        quantity: 1,
+        image: "https://images.unsplash.com/photo-1595777457583-95e059d581b8?q=80&w=600&auto=format&fit=crop",
+        size: "M",
+        color: "Olive Green",
+      }
+    ],
+    subtotal: 1180,
+    shipping: 0,
+    total: 1180,
+    shippingAddress: {
+      fullName: "Chloe Dupont",
+      email: "chloe.dupont@example.com",
+      address: "45 Rue de la Harpe",
+      city: "Paris",
+      postalCode: "75005",
+      country: "France",
+    },
+    status: "Delivered",
+  },
+  {
+    id: "ord-4011",
+    date: "2026-07-18",
+    items: [
+      {
+        productName: "Sculptural Matte Desk Lamp",
+        price: 165,
+        quantity: 1,
+        image: "https://images.unsplash.com/photo-1507473885765-e6ed057f782c?q=80&w=600&auto=format&fit=crop",
+      }
+    ],
+    subtotal: 165,
+    shipping: 15,
+    total: 180,
+    shippingAddress: {
+      fullName: "Mateo Ricci",
+      email: "mateo.ricci@example.com",
+      address: "Via dei Condotti 86",
+      city: "Rome",
+      postalCode: "00187",
+      country: "Italy",
+    },
+    status: "Processing",
+  },
+  {
+    id: "ord-7832",
+    date: "2026-07-16",
+    items: [
+      {
+        productName: "Tailored Cream Trousers",
+        price: 140,
+        quantity: 1,
+        image: "https://images.unsplash.com/photo-1509319117193-57bab727e09d?q=80&w=600&auto=format&fit=crop",
+        size: "4",
+        color: "Cream Alabaster",
+      },
+      {
+        productName: "Handmade Ribbed Ceramic Vase",
+        price: 65,
+        quantity: 1,
+        image: "https://images.unsplash.com/photo-1612196808214-b8e1d6145a8c?q=80&w=600&auto=format&fit=crop",
+      }
+    ],
+    subtotal: 205,
+    shipping: 10,
+    total: 215,
+    shippingAddress: {
+      fullName: "Sarah Jenkins",
+      email: "sarah.j@example.com",
+      address: "88 Baker St",
+      city: "London",
+      postalCode: "W1U 6SG",
+      country: "United Kingdom",
+    },
+    status: "Shipped",
+  },
+  {
+    id: "ord-8921",
+    date: "2026-07-14",
+    items: [
+      {
+        productName: "Bouclé Textured Accent Cushion",
+        price: 54,
+        quantity: 1,
+        image: "https://images.unsplash.com/photo-1584100936595-c0654b55a2e2?q=80&w=600&auto=format&fit=crop",
+      }
+    ],
+    subtotal: 54,
+    shipping: 10,
+    total: 64,
+    shippingAddress: {
+      fullName: "James O'Connor",
+      email: "james.oc@example.com",
+      address: "14 Merrion Square",
+      city: "Dublin",
+      postalCode: "D02",
+      country: "Ireland",
+    },
+    status: "Delivered",
+  }
+];
+
+export const DEFAULT_COUPONS: DiscountCoupon[] = [
+  { code: "MINIMAL20", type: "percentage", value: 20, minSpend: 0, active: true, usageCount: 42, expiryDate: "2026-12-31" },
+  { code: "FREESHIP", type: "percentage", value: 5, minSpend: 150, active: true, usageCount: 108, expiryDate: "2026-10-15" },
+  { code: "WELCOME10", type: "percentage", value: 10, minSpend: 50, active: true, usageCount: 254, expiryDate: "2026-12-31" },
+  { code: "SNOY30", type: "percentage", value: 30, minSpend: 100, active: false, usageCount: 15, expiryDate: "2026-06-30" },
+  { code: "ARCHIVE15", type: "percentage", value: 15, minSpend: 0, active: true, usageCount: 0, expiryDate: "2026-08-31" },
+];
+
