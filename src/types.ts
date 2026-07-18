@@ -1,11 +1,25 @@
-export type Category = "All" | "Men's Clothing" | "Women's Clothing" | "Home Decor";
+export type Category = string;
 
+export interface CategoryItem {
+  id: string;
+  name: string;
+  description: string;
+}
+
+export interface ExpenseItem {
+  id: string;
+  date: string;
+  category: string;
+  amount: number;
+  description: string;
+}
 export interface Review {
   id: string;
   author: string;
   rating: number;
   text: string;
   date: string;
+  reply?: string;
 }
 
 export interface Product {
@@ -56,3 +70,14 @@ export interface Order {
   };
   status: "Processing" | "Shipped" | "Delivered";
 }
+
+export interface DiscountCoupon {
+  code: string;
+  type: "percentage" | "fixed";
+  value: number;
+  minSpend?: number;
+  active: boolean;
+  usageCount: number;
+  expiryDate: string;
+}
+

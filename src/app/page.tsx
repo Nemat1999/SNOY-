@@ -1,4 +1,7 @@
+"use client";
+
 import React, { useState, useEffect } from "react";
+import Link from "next/link";
 import { motion, AnimatePresence } from "motion/react";
 import {
   ShoppingBag,
@@ -19,40 +22,27 @@ import {
   Instagram,
   Facebook,
   Twitter,
-  ExternalLink
+  ExternalLink,
+  Lock
 } from "lucide-react";
 
-import { Category, Product, CartItem, Order, Review } from "./types";
-import { PRODUCTS } from "./data";
-import ProductCard from "./components/ProductCard";
-import ProductDetailModal from "./components/ProductDetailModal";
-import CartDrawer from "./components/CartDrawer";
-import CheckoutModal from "./components/CheckoutModal";
-import AiStylist from "./components/AiStylist";
+import { Category, Product, CartItem, Order, Review, CategoryItem } from "../types";
+import { PRODUCTS, DEFAULT_ORDERS } from "../data";
+import ProductCard from "../components/ProductCard";
+import ProductDetailModal from "../components/ProductDetailModal";
+import CartDrawer from "../components/CartDrawer";
+import CheckoutModal from "../components/CheckoutModal";
+import AiStylist from "../components/AiStylist";
 
-export default function App() {
-  // --- CORE STATE ---
-  const [products, setProducts] = useState<Product[]>(() => {
-    const saved = localStorage.getItem("minimal_products");
-    return saved ? JSON.parse(saved) : PRODUCTS;
-  });
 
-  const [cartItems, setCartItems] = useState<CartItem[]>(() => {
-    const saved = localStorage.getItem("minimal_cart");
-    return saved ? JSON.parse(saved) : [];
-  });
-
-  const [wishlist, setWishlist] = useState<string[]>(() => {
-    const saved = localStorage.getItem("minimal_wishlist");
-    return saved ? JSON.parse(saved) : [];
-  });
-
-  const [orders, setOrders] = useState<Order[]>(() => {
-    const saved = localStorage.getItem("minimal_orders");
-    return saved ? JSON.parse(saved) : [];
-  });
-
+export default function Page() {
+  const [products, setProducts] = useState<Product[]>(PRODUCTS);
+  const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  const [wishlist, setWishlist] = useState<string[]>([]);
+  const [orders, setOrders] = useState<Order[]>(DEFAULT_ORDERS);
   const [recentlyViewed, setRecentlyViewed] = useState<Product[]>([]);
+  const [isMounted, setIsMounted] = useState(false);
+  const [categories, setCategories] = useState<CategoryItem[]>([]);
 
   // --- UI STATE ---
   const [selectedCategory, setSelectedCategory] = useState<Category>("All");
@@ -78,22 +68,68 @@ export default function App() {
   const [appliedPromo, setAppliedPromo] = useState("");
   const [discountAmount, setDiscountAmount] = useState(0);
 
-  // --- STORAGE SYNCS ---
+  // Load from localStorage only on client after mounting
   useEffect(() => {
-    localStorage.setItem("minimal_products", JSON.stringify(products));
-  }, [products]);
+    setIsMounted(true);
+
+    const dbVersion = localStorage.getItem("minimal_db_version_v2");
+    if (dbVersion !== "3") {
+      localStorage.setItem("minimal_products", JSON.stringify(PRODUCTS));
+      localStorage.setItem("minimal_orders", JSON.stringify(DEFAULT_ORDERS));
+      localStorage.setItem("minimal_db_version_v2", "3");
+
+      setProducts(PRODUCTS);
+      setOrders(DEFAULT_ORDERS);
+    } else {
+      const savedProducts = localStorage.getItem("minimal_products");
+      if (savedProducts) setProducts(JSON.parse(savedProducts));
+
+      const savedOrders = localStorage.getItem("minimal_orders");
+      setOrders(savedOrders ? JSON.parse(savedOrders) : DEFAULT_ORDERS);
+    }
+
+    const savedCart = localStorage.getItem("minimal_cart");
+    if (savedCart) setCartItems(JSON.parse(savedCart));
+
+    const savedWishlist = localStorage.getItem("minimal_wishlist");
+    if (savedWishlist) setWishlist(JSON.parse(savedWishlist));
+
+    const savedCategories = localStorage.getItem("minimal_categories");
+    if (savedCategories) {
+      setCategories(JSON.parse(savedCategories));
+    } else {
+      setCategories([
+        { id: "cat-1", name: "Men's Clothing", description: "" },
+        { id: "cat-2", name: "Women's Clothing", description: "" },
+        { id: "cat-3", name: "Home Decor", description: "" }
+      ]);
+    }
+  }, []);
+
+  // --- STORAGE SYNCS (only sync after mounted) ---
+  useEffect(() => {
+    if (isMounted) {
+      localStorage.setItem("minimal_products", JSON.stringify(products));
+    }
+  }, [products, isMounted]);
 
   useEffect(() => {
-    localStorage.setItem("minimal_cart", JSON.stringify(cartItems));
-  }, [cartItems]);
+    if (isMounted) {
+      localStorage.setItem("minimal_cart", JSON.stringify(cartItems));
+    }
+  }, [cartItems, isMounted]);
 
   useEffect(() => {
-    localStorage.setItem("minimal_wishlist", JSON.stringify(wishlist));
-  }, [wishlist]);
+    if (isMounted) {
+      localStorage.setItem("minimal_wishlist", JSON.stringify(wishlist));
+    }
+  }, [wishlist, isMounted]);
 
   useEffect(() => {
-    localStorage.setItem("minimal_orders", JSON.stringify(orders));
-  }, [orders]);
+    if (isMounted) {
+      localStorage.setItem("minimal_orders", JSON.stringify(orders));
+    }
+  }, [orders, isMounted]);
 
   // Show automatic alert
   const triggerAlert = (text: string, type: "success" | "info" = "success") => {
@@ -299,23 +335,40 @@ export default function App() {
 
           {/* Desktop Nav Categories */}
           <nav className="hidden md:flex gap-8 text-xs font-semibold uppercase tracking-widest text-stone-500">
-            {(["All", "Men's Clothing", "Women's Clothing", "Home Decor"] as Category[]).map((cat) => (
+            <button
+              onClick={() => {
+                setSelectedCategory("All");
+                document.getElementById("showroom")?.scrollIntoView({ behavior: "smooth" });
+              }}
+              className={`relative py-1.5 transition-colors hover:text-stone-900 cursor-pointer ${
+                selectedCategory === "All" ? "text-stone-955 font-bold" : ""
+              }`}
+            >
+              All
+              {selectedCategory === "All" && (
+                <motion.span
+                  layoutId="activeCategoryUnderline"
+                  className="absolute bottom-0 left-0 h-0.5 w-full bg-stone-950"
+                />
+              )}
+            </button>
+            {categories.map((cat) => (
               <button
-                key={cat}
+                key={cat.id}
                 onClick={() => {
-                  setSelectedCategory(cat);
+                  setSelectedCategory(cat.name);
                   // Scroll smoothly to shop section
                   document.getElementById("showroom")?.scrollIntoView({ behavior: "smooth" });
                 }}
                 className={`relative py-1.5 transition-colors hover:text-stone-900 cursor-pointer ${
-                  selectedCategory === cat ? "text-stone-950 font-bold" : ""
+                  selectedCategory === cat.name ? "text-stone-955 font-bold" : ""
                 }`}
               >
-                {cat}
-                {selectedCategory === cat && (
+                {cat.name}
+                {selectedCategory === cat.name && (
                   <motion.span
                     layoutId="activeCategoryUnderline"
-                    className="absolute bottom-0 left-0 h-0.5 w-full bg-stone-950"
+                    className="absolute bottom-0 left-0 h-0.5 w-full bg-stone-955"
                   />
                 )}
               </button>
@@ -372,15 +425,23 @@ export default function App() {
                 </span>
               )}
             </button>
+
+            {/* Admin Dashboard Access Link */}
+            <Link
+              href="/admin/dashboard"
+              className="rounded-full p-2 text-stone-700 hover:bg-stone-50 hover:text-stone-900 transition-all active:scale-95 ml-0.5"
+              title="Admin Dashboard"
+            >
+              <Lock className="h-4.5 w-4.5" />
+            </Link>
           </div>
         </div>
       </header>
 
-      {/* HERO SECTION - Elegant, minimalistic display with subtle entrance animations */}
+      {/* HERO SECTION */}
       <section className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-8 pb-12">
         <div className="relative overflow-hidden rounded-3xl bg-stone-100 py-20 px-8 sm:px-16 lg:py-28 lg:px-24">
           <div className="absolute inset-0 z-0">
-            {/* Minimal atmospheric pattern background */}
             <div className="absolute inset-0 bg-stone-200/40" />
             <img
               src="https://images.unsplash.com/photo-1544441893-675973e31985?q=80&w=1600&auto=format&fit=crop"
@@ -404,7 +465,7 @@ export default function App() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.7, delay: 0.1 }}
-              className="font-display text-4xl sm:text-5xl font-semibold tracking-tight text-stone-950 leading-[1.1]"
+              className="font-display text-4xl sm:text-5xl font-semibold tracking-tight text-stone-955 leading-[1.1]"
             >
               Curated items <br />
               for modern life.
@@ -518,15 +579,23 @@ export default function App() {
                 <div>
                   <h4 className="text-xs font-bold uppercase tracking-wider text-stone-800 mb-3">Filter by Category</h4>
                   <div className="flex flex-wrap gap-2">
-                    {(["All", "Men's Clothing", "Women's Clothing", "Home Decor"] as Category[]).map((cat) => (
+                    <button
+                      onClick={() => setSelectedCategory("All")}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                        selectedCategory === "All" ? "bg-stone-900 text-white font-bold" : "bg-stone-100 text-stone-600 hover:bg-stone-200"
+                      }`}
+                    >
+                      All
+                    </button>
+                    {categories.map((cat) => (
                       <button
-                        key={cat}
-                        onClick={() => setSelectedCategory(cat)}
+                        key={cat.id}
+                        onClick={() => setSelectedCategory(cat.name)}
                         className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                          selectedCategory === cat ? "bg-stone-900 text-white font-bold" : "bg-stone-100 text-stone-600 hover:bg-stone-200"
+                          selectedCategory === cat.name ? "bg-stone-900 text-white font-bold" : "bg-stone-100 text-stone-600 hover:bg-stone-200"
                         }`}
                       >
-                        {cat}
+                        {cat.name}
                       </button>
                     ))}
                   </div>
@@ -589,14 +658,14 @@ export default function App() {
                 setMaxPrice(350);
                 setSearchQuery("");
               }}
-              className="mt-6 rounded-xl bg-stone-900 px-5 py-2 text-xs font-semibold text-white hover:bg-stone-800 transition-all active:scale-95"
+              className="mt-6 rounded-xl bg-stone-900 px-5 py-2 text-xs font-semibold text-white hover:bg-stone-850 transition-all active:scale-95"
             >
               Reset Parameters
             </button>
           </div>
         )}
 
-        {/* Dynamic Products Grid with Hover Micro-animations */}
+        {/* Dynamic Products Grid */}
         <motion.div
           layout
           className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-6 gap-y-10"
@@ -614,11 +683,10 @@ export default function App() {
         </motion.div>
       </main>
 
-      {/* INTERACTIVE REVIEW TIMELINE TRACKER (placed below showroom for real-time order history tracking!) */}
+      {/* Courier Tracker */}
       <AnimatePresence>
         {activeOrderTrack && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            {/* Backdrop */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -627,7 +695,6 @@ export default function App() {
               className="absolute inset-0 bg-stone-900/40 backdrop-blur-xs"
             />
 
-            {/* Tracking Card */}
             <motion.div
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
@@ -659,10 +726,7 @@ export default function App() {
                 </div>
               </div>
 
-              {/* Delivery Timeline Stepper */}
               <div className="mt-6 space-y-6 relative before:absolute before:left-3.5 before:top-2 before:bottom-2 before:w-[1.5px] before:bg-stone-200">
-                
-                {/* Step 1: Placed */}
                 <div className="flex gap-4 items-start relative z-10">
                   <div className="flex h-7 w-7 items-center justify-center rounded-full bg-stone-900 text-white shadow-sm ring-4 ring-stone-100 shrink-0">
                     <Check className="h-3.5 w-3.5 stroke-[3]" />
@@ -673,7 +737,6 @@ export default function App() {
                   </div>
                 </div>
 
-                {/* Step 2: Processing */}
                 <div className="flex gap-4 items-start relative z-10">
                   <div className="flex h-7 w-7 items-center justify-center rounded-full bg-stone-900 text-white ring-4 ring-stone-100 shrink-0 animate-pulse">
                     <Clock className="h-3.5 w-3.5 text-amber-200" />
@@ -684,7 +747,6 @@ export default function App() {
                   </div>
                 </div>
 
-                {/* Step 3: Courier Picked Up */}
                 <div className="flex gap-4 items-start relative z-10">
                   <div className="flex h-7 w-7 items-center justify-center rounded-full bg-stone-100 text-stone-400 ring-4 ring-stone-100 shrink-0">
                     <Truck className="h-3.5 w-3.5" />
@@ -695,7 +757,6 @@ export default function App() {
                   </div>
                 </div>
 
-                {/* Step 4: Delivered */}
                 <div className="flex gap-4 items-start relative z-10">
                   <div className="flex h-7 w-7 items-center justify-center rounded-full bg-stone-100 text-stone-400 ring-4 ring-stone-100 shrink-0">
                     <MapPin className="h-3.5 w-3.5" />
@@ -705,7 +766,6 @@ export default function App() {
                     <p className="text-stone-400 mt-0.5">Will be signed and delivered safely at {activeOrderTrack.shippingAddress.address}, {activeOrderTrack.shippingAddress.city}.</p>
                   </div>
                 </div>
-
               </div>
 
               <button
@@ -719,7 +779,7 @@ export default function App() {
         )}
       </AnimatePresence>
 
-      {/* NEWSLETTER SUBSCRIBE GRID */}
+      {/* NEWSLETTER */}
       <section className="bg-stone-100/60 border-y border-stone-200/50 py-16 mt-16">
         <div className="mx-auto max-w-4xl px-4 text-center space-y-6">
           <span className="text-[10px] font-bold uppercase tracking-widest text-stone-400">Atelier Chronicle</span>
@@ -747,7 +807,7 @@ export default function App() {
                     placeholder="Enter your email address"
                     value={newsletterEmail}
                     onChange={(e) => setNewsletterEmail(e.target.value)}
-                    className="w-full rounded-xl border border-stone-200 bg-white pl-9 pr-4 py-3 text-xs focus:border-stone-900 focus:outline-none focus:ring-1 focus:ring-stone-900"
+                    className="w-full rounded-xl border border-stone-200 bg-white pl-9 pr-4 py-3 text-xs focus:border-stone-900 focus:outline-none"
                   />
                   <Mail className="absolute left-3.5 top-3.5 h-4 w-4 text-stone-400" />
                 </div>
@@ -773,11 +833,9 @@ export default function App() {
         </div>
       </section>
 
-      {/* MINIMAL FOOTER */}
+      {/* FOOTER */}
       <footer className="bg-white border-t border-stone-100 py-12 text-xs text-stone-500">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-4 gap-8">
-          
-          {/* Logo & About */}
           <div className="space-y-4">
             <div className="flex items-center gap-1.5">
               <span className="font-display text-base font-bold tracking-tight uppercase text-stone-950">
@@ -790,18 +848,20 @@ export default function App() {
             </p>
           </div>
 
-          {/* Quick links */}
           <div>
             <h4 className="text-[10px] font-bold uppercase tracking-wider text-stone-800 mb-3.5">Categories</h4>
             <ul className="space-y-2 font-medium">
-              <li><button onClick={() => { setSelectedCategory("Men's Clothing"); }} className="hover:text-stone-900">Men's Capsule</button></li>
-              <li><button onClick={() => { setSelectedCategory("Women's Clothing"); }} className="hover:text-stone-900">Women's Collection</button></li>
-              <li><button onClick={() => { setSelectedCategory("Home Decor"); }} className="hover:text-stone-900">Sculptural Home Decor</button></li>
               <li><button onClick={() => { setSelectedCategory("All"); }} className="hover:text-stone-900">Full Catalog</button></li>
+              {categories.map((cat) => (
+                <li key={cat.id}>
+                  <button onClick={() => { setSelectedCategory(cat.name); }} className="hover:text-stone-900">
+                    {cat.name}
+                  </button>
+                </li>
+              ))}
             </ul>
           </div>
 
-          {/* Help Center */}
           <div>
             <h4 className="text-[10px] font-bold uppercase tracking-wider text-stone-800 mb-3.5">Customer Care</h4>
             <ul className="space-y-2 font-medium">
@@ -812,7 +872,6 @@ export default function App() {
             </ul>
           </div>
 
-          {/* Social connection */}
           <div className="space-y-4">
             <h4 className="text-[10px] font-bold uppercase tracking-wider text-stone-800">Follow the Atelier</h4>
             <div className="flex gap-3 text-stone-400">
@@ -825,10 +884,8 @@ export default function App() {
               New York, NY 10013
             </p>
           </div>
-
         </div>
 
-        {/* Legal Row */}
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 border-t border-stone-100 mt-10 pt-6 flex flex-col sm:flex-row justify-between text-[10px] text-stone-400">
           <p>© 2026 Atelier Store. All Rights Reserved.</p>
           <div className="flex gap-4 mt-2 sm:mt-0">
@@ -838,14 +895,14 @@ export default function App() {
         </div>
       </footer>
 
-      {/* --- FLOATING AI STYLIST CHAT DRAWER & ADVICE --- */}
+      {/* AI STYLIST */}
       <AiStylist
         cartItems={cartItems}
         onAddToCart={handleAddToCart}
         recentlyViewed={recentlyViewed}
       />
 
-      {/* --- PRODUCT DETAIL MODAL --- */}
+      {/* PRODUCT DETAIL MODAL */}
       {activeProductDetail && (
         <ProductDetailModal
           product={activeProductDetail}
@@ -857,7 +914,7 @@ export default function App() {
         />
       )}
 
-      {/* --- CART DRAWER --- */}
+      {/* CART DRAWER */}
       <CartDrawer
         isOpen={isCartOpen}
         onClose={() => setIsCartOpen(false)}
@@ -867,15 +924,17 @@ export default function App() {
         onCheckout={handleProceedToCheckout}
       />
 
-      {/* --- SECURE CHECKOUT MODAL --- */}
-      <CheckoutModal
-        isOpen={isCheckoutOpen}
-        onClose={() => setIsCheckoutOpen(false)}
-        cartItems={cartItems}
-        discountAmount={discountAmount}
-        promoCode={appliedPromo}
-        onOrderPlaced={handleOrderPlaced}
-      />
+      {/* SECURE CHECKOUT MODAL */}
+      {isCheckoutOpen && (
+        <CheckoutModal
+          isOpen={isCheckoutOpen}
+          onClose={() => setIsCheckoutOpen(false)}
+          cartItems={cartItems}
+          discountAmount={discountAmount}
+          promoCode={appliedPromo}
+          onOrderPlaced={handleOrderPlaced}
+        />
+      )}
 
     </div>
   );
