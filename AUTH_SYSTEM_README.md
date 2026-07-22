@@ -26,6 +26,8 @@ SNOY-/
 │       └── 20260722180000-create-rate-limit.cjs
 │
 └── src/
+    ├── middleware.ts             # Next.js Server-Side Route Guard (Cookie-based redirect)
+    │
     ├── lib/                      # Shared utility modules
     │   ├── db.ts                 # Sequelize instance + model init
     │   ├── auth.ts               # JWT sign/verify helpers

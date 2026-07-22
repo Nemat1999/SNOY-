@@ -3,39 +3,39 @@
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "motion/react";
-import { Sparkles, ArrowRight, Lock, User, Eye, EyeOff, AlertCircle } from "lucide-react";
+import { Sparkles, ArrowRight, Lock, Mail, Eye, EyeOff, AlertCircle } from "lucide-react";
+import { useAuth } from "../../../context/AuthContext";
 
 export default function LoginPage() {
   const router = useRouter();
-  const [username, setUsername] = useState("");
+  const { user, login } = useAuth();
+
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  // If already logged in, redirect to dashboard
+  // Redirect if already authenticated
   useEffect(() => {
-    const token = localStorage.getItem("admin_token");
-    if (token === "atelier_secret_token_val") {
+    if (user) {
       router.push("/admin/dashboard");
     }
-  }, [router]);
+  }, [user, router]);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setIsLoading(true);
 
-    // Simulate short network delay for premium feel
-    setTimeout(() => {
-      if (username.trim().toLowerCase() === "admin" && password === "admin") {
-        localStorage.setItem("admin_token", "atelier_secret_token_val");
-        router.push("/admin/dashboard");
-      } else {
-        setError("Invalid credentials. Use 'admin' for both fields.");
-        setIsLoading(false);
-      }
-    }, 1000);
+    const result = await login(email, password);
+
+    if (result.success) {
+      router.push("/admin/dashboard");
+    } else {
+      setError(result.error || "Invalid credentials");
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -69,21 +69,21 @@ export default function LoginPage() {
         {/* Form */}
         <form onSubmit={handleLogin} className="space-y-5">
           
-          {/* Username */}
+          {/* Email */}
           <div className="space-y-2">
             <label className="text-[10px] font-bold uppercase tracking-wider text-stone-500 block">
-              Username
+              Email Address
             </label>
             <div className="relative">
               <input
-                type="text"
+                type="email"
                 required
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                placeholder="Enter username"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="admin@snoy.com"
                 className="w-full rounded-xl border border-stone-200 bg-stone-50/40 pl-10 pr-4 py-3.5 text-xs focus:border-stone-900 focus:outline-none transition-all placeholder:text-stone-400 font-medium"
               />
-              <User className="absolute left-3.5 top-3.5 h-4 w-4 text-stone-400" />
+              <Mail className="absolute left-3.5 top-3.5 h-4 w-4 text-stone-400" />
             </div>
           </div>
 
@@ -130,7 +130,7 @@ export default function LoginPage() {
             <motion.div
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: "auto" }}
-              className="flex items-center gap-2.5 rounded-xl border border-red-100 bg-red-50/50 p-3.5 text-[11px] text-red-650 font-medium leading-relaxed"
+              className="flex items-center gap-2.5 rounded-xl border border-red-100 bg-red-50/50 p-3.5 text-[11px] text-red-600 font-medium leading-relaxed"
             >
               <AlertCircle className="h-4 w-4 text-red-500 shrink-0" />
               <span>{error}</span>
@@ -141,7 +141,7 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full mt-6 rounded-xl bg-stone-950 px-5 py-3.5 text-xs font-bold text-white shadow-lg shadow-stone-950/15 hover:bg-stone-850 transition-all active:scale-98 flex items-center justify-center gap-2 disabled:opacity-75 disabled:pointer-events-none"
+            className="w-full mt-6 rounded-xl bg-stone-950 px-5 py-3.5 text-xs font-bold text-white shadow-lg shadow-stone-950/15 hover:bg-stone-850 transition-all active:scale-98 flex items-center justify-center gap-2 disabled:opacity-75 disabled:pointer-events-none cursor-pointer"
           >
             {isLoading ? (
               <span className="h-4 w-4 border-2 border-stone-400 border-t-white rounded-full animate-spin" />
@@ -156,7 +156,7 @@ export default function LoginPage() {
         {/* Demo Helper Banner */}
         <div className="mt-8 border-t border-stone-100 pt-6 text-center">
           <p className="text-[10px] text-stone-400 font-medium">
-            Demo Credentials: <code className="bg-stone-100 px-1.5 py-0.5 rounded font-mono text-stone-600">admin</code> / <code className="bg-stone-100 px-1.5 py-0.5 rounded font-mono text-stone-600">admin</code>
+            Super Admin: <code className="bg-stone-100 px-1.5 py-0.5 rounded font-mono text-stone-600">admin@snoy.com</code> / <code className="bg-stone-100 px-1.5 py-0.5 rounded font-mono text-stone-600">Admin@123456</code>
           </p>
         </div>
       </motion.div>

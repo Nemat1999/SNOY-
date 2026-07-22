@@ -1,43 +1,23 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import db from '../../../../../lib/db';
-import { verifyAccessToken } from '../../../../../lib/auth';
+import { authGuard } from '../../../../../lib/authGuard';
 
 export async function GET(req: Request) {
   try {
-    const cookieStore = await cookies();
-    let token = cookieStore.get('accessToken')?.value;
-
-    // Fallback to Authorization Header
-    if (!token) {
-      const authHeader = req.headers.get('authorization');
-      if (authHeader && authHeader.startsWith('Bearer ')) {
-        token = authHeader.substring(7);
-      }
-    }
-
-    if (!token) {
-      return NextResponse.json(
-        { error: 'Unauthorized: Access token missing' },
-        { status: 401 }
-      );
-    }
-
-    const decoded = verifyAccessToken(token);
-    if (!decoded) {
-      return NextResponse.json(
-        { error: 'Unauthorized: Access token invalid or expired' },
-        { status: 401 }
-      );
+    const auth = await authGuard(req, 'strict');
+    if (auth.error) {
+      return auth.error;
     }
 
     // Fetch active sessions
     const sessions = await db.Session.findAll({
-      where: { userId: decoded.id },
+      where: { userId: auth.user.id },
       attributes: ['id', 'token', 'userAgent', 'ipAddress', 'expiresAt', 'createdAt'],
       order: [['createdAt', 'DESC']]
     });
 
+    const cookieStore = await cookies();
     const currentRefreshToken = cookieStore.get('refreshToken')?.value;
 
     const sessionList = sessions.map((sess: any) => ({

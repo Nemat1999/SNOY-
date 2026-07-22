@@ -1,13 +1,16 @@
 "use client";
 
-import React, { useState } from "react";
-import { Save, Store, Mail, Globe, Bell } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { Save, Store, Globe, Bell, Shield, Monitor, Smartphone, LogOut, RefreshCw } from "lucide-react";
+import { useAuth, SessionInfo } from "../../context/AuthContext";
 
 interface SettingsTabProps {
   triggerAlert: (text: string, type?: "success" | "info") => void;
 }
 
 export default function SettingsTab({ triggerAlert }: SettingsTabProps) {
+  const { user, getSessions, logoutAll } = useAuth();
+
   const [storeName, setStoreName] = useState("Atelier Showroom");
   const [contactEmail, setContactEmail] = useState("concierge@atelierstore.com");
   const [currency, setCurrency] = useState("USD");
@@ -15,9 +18,31 @@ export default function SettingsTab({ triggerAlert }: SettingsTabProps) {
   const [notifyNewOrders, setNotifyNewOrders] = useState(true);
   const [notifyLowStock, setNotifyLowStock] = useState(true);
 
+  // Active Sessions State
+  const [sessions, setSessions] = useState<SessionInfo[]>([]);
+  const [isLoadingSessions, setIsLoadingSessions] = useState(false);
+
+  const fetchSessionsList = async () => {
+    setIsLoadingSessions(true);
+    const data = await getSessions();
+    setSessions(data);
+    setIsLoadingSessions(false);
+  };
+
+  useEffect(() => {
+    fetchSessionsList();
+  }, []);
+
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
     triggerAlert("Configuration profiles saved successfully.");
+  };
+
+  const handleRevokeAll = async () => {
+    if (confirm("Are you sure you want to sign out from all devices? You will be logged out immediately.")) {
+      await logoutAll();
+      window.location.href = "/admin/login";
+    }
   };
 
   return (
@@ -26,9 +51,96 @@ export default function SettingsTab({ triggerAlert }: SettingsTabProps) {
       {/* Title */}
       <div>
         <h1 className="font-display text-2xl font-bold uppercase tracking-wider text-stone-950">
-          Store Config
+          Store Config & Security
         </h1>
-        <p className="text-xs text-stone-400 mt-1">Configure global variables, logistics variables, and messaging alerts.</p>
+        <p className="text-xs text-stone-400 mt-1">Configure global variables, active auth sessions, and messaging alerts.</p>
+      </div>
+
+      {/* Active User Security Profile */}
+      <div className="bg-stone-900 text-white rounded-2xl p-6 shadow-md space-y-4">
+        <div className="flex items-center justify-between border-b border-stone-800 pb-3">
+          <h3 className="text-xs font-bold uppercase tracking-wider flex items-center gap-2 text-stone-200">
+            <Shield className="h-4 w-4 text-emerald-400" /> Authenticated Profile
+          </h3>
+          <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-bold uppercase">
+            {user?.role || "user"}
+          </span>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+          <div>
+            <p className="text-[10px] uppercase font-bold text-stone-400">Account Name</p>
+            <p className="font-semibold text-stone-100 mt-0.5">{user?.name || "Super Admin"}</p>
+          </div>
+          <div>
+            <p className="text-[10px] uppercase font-bold text-stone-400">Email Address</p>
+            <p className="font-semibold text-stone-100 mt-0.5">{user?.email || "admin@snoy.com"}</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Active Devices & Sessions Section */}
+      <div className="bg-white border border-stone-200 rounded-2xl p-6 shadow-xs space-y-4">
+        <div className="flex items-center justify-between border-b border-stone-100 pb-3">
+          <h3 className="text-xs font-bold uppercase tracking-wider text-stone-850 flex items-center gap-1.5">
+            <Monitor className="h-4 w-4 text-stone-500" /> Active Logged-in Devices ({sessions.length})
+          </h3>
+          <button
+            onClick={fetchSessionsList}
+            disabled={isLoadingSessions}
+            className="text-[10px] font-bold uppercase tracking-wider text-stone-500 hover:text-stone-900 flex items-center gap-1 cursor-pointer disabled:opacity-50"
+          >
+            <RefreshCw className={`h-3 w-3 ${isLoadingSessions ? "animate-spin" : ""}`} /> Refresh
+          </button>
+        </div>
+
+        <div className="space-y-3">
+          {sessions.length === 0 ? (
+            <p className="text-xs text-stone-400 italic">No active session data found.</p>
+          ) : (
+            sessions.map((sess) => (
+              <div
+                key={sess.id}
+                className="flex items-center justify-between p-3.5 rounded-xl border border-stone-150 bg-stone-50/50 text-xs"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="h-8 w-8 rounded-lg bg-stone-200 flex items-center justify-center text-stone-700">
+                    {sess.userAgent.toLowerCase().includes("mobile") || sess.userAgent.toLowerCase().includes("iphone") ? (
+                      <Smartphone className="h-4 w-4" />
+                    ) : (
+                      <Monitor className="h-4 w-4" />
+                    )}
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="font-semibold text-stone-900">{sess.userAgent}</span>
+                      {sess.isCurrentDevice && (
+                        <span className="text-[9px] bg-emerald-100 text-emerald-800 font-bold px-1.5 py-0.5 rounded uppercase">
+                          Current Device
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-[10px] text-stone-400 font-medium">
+                      IP: {sess.ipAddress} • Logged in: {new Date(sess.createdAt).toLocaleDateString()}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+
+        {sessions.length > 0 && (
+          <div className="pt-2 border-t border-stone-100">
+            <button
+              type="button"
+              onClick={handleRevokeAll}
+              className="text-xs font-bold text-red-600 hover:text-red-700 flex items-center gap-1.5 cursor-pointer uppercase tracking-wider"
+            >
+              <LogOut className="h-4 w-4" /> Logout From All Devices
+            </button>
+          </div>
+        )}
       </div>
 
       <form onSubmit={handleSave} className="space-y-6">

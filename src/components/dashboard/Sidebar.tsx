@@ -1,9 +1,10 @@
 "use client";
 
 import React from "react";
-import { LayoutDashboard, Package, Tag, ShoppingCart, Users, TrendingUp, Percent, MessageSquare, Settings, LogOut } from "lucide-react";
+import { LayoutDashboard, Package, Tag, ShoppingCart, Users, TrendingUp, Percent, MessageSquare, Settings, LogOut, ShieldCheck } from "lucide-react";
 import { motion } from "motion/react";
 import { DashboardTab } from "../../app/admin/dashboard/page";
+import { useAuth } from "../../context/AuthContext";
 
 interface SidebarProps {
   activeTab: DashboardTab;
@@ -12,6 +13,8 @@ interface SidebarProps {
 }
 
 export default function Sidebar({ activeTab, setActiveTab, onLogout }: SidebarProps) {
+  const { user } = useAuth();
+
   const menuItems = [
     { id: "overview", label: "Overview", icon: LayoutDashboard },
     { id: "products", label: "Products", icon: Package },
@@ -24,12 +27,16 @@ export default function Sidebar({ activeTab, setActiveTab, onLogout }: SidebarPr
     { id: "settings", label: "Settings", icon: Settings },
   ] as const;
 
+  const initials = user?.name
+    ? user.name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2)
+    : "AD";
+
   return (
     <aside className="w-64 bg-white border-r border-stone-200 flex flex-col h-screen shrink-0 select-none">
       {/* Brand Header */}
       <div className="px-6 py-8 border-b border-stone-150 flex items-center gap-1.5 shrink-0">
         <span className="font-display text-lg font-bold tracking-tight uppercase text-stone-950">
-          Atelier Admin
+          SNOY Admin
         </span>
         <span className="h-1.5 w-1.5 rounded-full bg-stone-900" />
       </div>
@@ -70,11 +77,18 @@ export default function Sidebar({ activeTab, setActiveTab, onLogout }: SidebarPr
       <div className="p-4 border-t border-stone-150 bg-stone-50/40 shrink-0">
         <div className="flex items-center gap-3 px-2 py-3 mb-2">
           <div className="h-9 w-9 rounded-full bg-stone-950 flex items-center justify-center text-white text-xs font-bold font-display uppercase">
-            AD
+            {initials}
           </div>
-          <div>
-            <h4 className="text-xs font-bold text-stone-900 leading-tight">Admin User</h4>
-            <p className="text-[9px] text-stone-400 font-bold uppercase tracking-wider mt-0.5">Showroom Chief</p>
+          <div className="overflow-hidden">
+            <h4 className="text-xs font-bold text-stone-900 leading-tight truncate">
+              {user?.name || "Admin User"}
+            </h4>
+            <div className="flex items-center gap-1 mt-0.5">
+              <ShieldCheck className="h-3 w-3 text-emerald-600" />
+              <p className="text-[9px] text-stone-500 font-bold uppercase tracking-wider truncate">
+                {user?.role || "super_admin"}
+              </p>
+            </div>
           </div>
         </div>
 

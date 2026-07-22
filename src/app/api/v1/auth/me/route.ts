@@ -4,8 +4,8 @@ import { authGuard } from '../../../../../lib/authGuard';
 
 export async function GET(req: Request) {
   try {
-    // Authenticate request using authGuard
-    const auth = await authGuard(req, 'basic');
+    // Authenticate request using strict authGuard (DB session check)
+    const auth = await authGuard(req, 'strict');
     if (auth.error) {
       return auth.error;
     }

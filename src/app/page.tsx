@@ -23,7 +23,8 @@ import {
   Facebook,
   Twitter,
   ExternalLink,
-  Lock
+  Lock,
+  User as UserIcon
 } from "lucide-react";
 
 import { Category, Product, CartItem, Order, Review, CategoryItem } from "../types";
@@ -33,6 +34,8 @@ import ProductDetailModal from "../components/ProductDetailModal";
 import CartDrawer from "../components/CartDrawer";
 import CheckoutModal from "../components/CheckoutModal";
 import AiStylist from "../components/AiStylist";
+import AuthModal from "../components/AuthModal";
+import { useAuth } from "../context/AuthContext";
 
 
 export default function Page() {
@@ -56,6 +59,9 @@ export default function Page() {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const [activeOrderTrack, setActiveOrderTrack] = useState<Order | null>(null);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+
+  const { user } = useAuth();
 
   // Alerts
   const [alertMessage, setAlertMessage] = useState<{ text: string; type: "success" | "info" } | null>(null);
@@ -389,6 +395,20 @@ export default function Page() {
                 <span className="hidden sm:inline">Track</span>
               </button>
             )}
+
+            {/* User Account / Sign In Button */}
+            <button
+              onClick={() => setIsAuthModalOpen(true)}
+              className="relative flex items-center gap-1.5 rounded-full p-2 text-stone-700 hover:bg-stone-50 hover:text-stone-900 transition-all active:scale-95 cursor-pointer"
+              title={user ? `Logged in as ${user.name}` : "Sign In / Register"}
+            >
+              <UserIcon className="h-4.5 w-4.5" />
+              {user && (
+                <span className="hidden lg:inline text-[10px] font-bold uppercase tracking-wider text-stone-900 max-w-[80px] truncate">
+                  {user.name.split(" ")[0]}
+                </span>
+              )}
+            </button>
 
             {/* Wishlist Button */}
             <div className="relative">
@@ -936,6 +956,11 @@ export default function Page() {
         />
       )}
 
+      {/* Customer Auth Modal */}
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+      />
     </div>
   );
 }

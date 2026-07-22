@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Sparkles, Check } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
+import { useAuth } from "../../../context/AuthContext";
 
 import { Product, Order, CategoryItem, ExpenseItem, DiscountCoupon } from "../../../types";
 import { PRODUCTS, DEFAULT_CATEGORIES, DEFAULT_EXPENSES, DEFAULT_ORDERS, DEFAULT_COUPONS } from "../../../data";
@@ -35,8 +36,8 @@ export type DashboardTab =
 
 export default function DashboardPage() {
   const router = useRouter();
+  const { user, isLoading, logout } = useAuth();
   const [isMounted, setIsMounted] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [activeTab, setActiveTab] = useState<DashboardTab>("overview");
 
   // Core full-stack state synced with localStorage
@@ -50,11 +51,10 @@ export default function DashboardPage() {
   // Authentication check and state initialization
   useEffect(() => {
     setIsMounted(true);
-    const token = localStorage.getItem("admin_token");
-    if (token !== "atelier_secret_token_val") {
+
+    if (!isLoading && !user) {
       router.push("/admin/login");
-    } else {
-      setIsAuthenticated(true);
+      return;
     }
 
     const dbVersion = localStorage.getItem("minimal_db_version_v2");
@@ -92,38 +92,38 @@ export default function DashboardPage() {
       const savedCoupons = localStorage.getItem("minimal_coupons");
       setCoupons(savedCoupons ? JSON.parse(savedCoupons) : DEFAULT_COUPONS);
     }
-  }, [router]);
+  }, [user, isLoading, router]);
 
   // Sync state changes back to localStorage
   useEffect(() => {
-    if (isMounted && isAuthenticated) {
+    if (isMounted && Boolean(user)) {
       localStorage.setItem("minimal_products", JSON.stringify(products));
     }
-  }, [products, isMounted, isAuthenticated]);
+  }, [products, isMounted, user]);
 
   useEffect(() => {
-    if (isMounted && isAuthenticated) {
+    if (isMounted && Boolean(user)) {
       localStorage.setItem("minimal_orders", JSON.stringify(orders));
     }
-  }, [orders, isMounted, isAuthenticated]);
+  }, [orders, isMounted, user]);
 
   useEffect(() => {
-    if (isMounted && isAuthenticated) {
+    if (isMounted && Boolean(user)) {
       localStorage.setItem("minimal_categories", JSON.stringify(categories));
     }
-  }, [categories, isMounted, isAuthenticated]);
+  }, [categories, isMounted, user]);
 
   useEffect(() => {
-    if (isMounted && isAuthenticated) {
+    if (isMounted && Boolean(user)) {
       localStorage.setItem("minimal_expenses", JSON.stringify(expenses));
     }
-  }, [expenses, isMounted, isAuthenticated]);
+  }, [expenses, isMounted, user]);
 
   useEffect(() => {
-    if (isMounted && isAuthenticated) {
+    if (isMounted && Boolean(user)) {
       localStorage.setItem("minimal_coupons", JSON.stringify(coupons));
     }
-  }, [coupons, isMounted, isAuthenticated]);
+  }, [coupons, isMounted, user]);
 
   const triggerAlert = (text: string, type: "success" | "info" = "success") => {
     setAlertMessage({ text, type });
@@ -132,12 +132,12 @@ export default function DashboardPage() {
     }, 4000);
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem("admin_token");
+  const handleLogout = async () => {
+    await logout();
     router.push("/admin/login");
   };
 
-  if (!isMounted || !isAuthenticated) {
+  if (!isMounted || isLoading || !user) {
     return (
       <div className="min-h-screen bg-stone-50 flex items-center justify-center font-sans">
         <div className="flex flex-col items-center gap-3 select-none">
