@@ -38,6 +38,7 @@ SNOY-/
         ├── refresh/route.ts      # POST — Token rotation
         ├── logout/route.ts       # POST — Single device logout
         ├── logout-all/route.ts   # POST — All devices logout
+        ├── me/route.ts           # GET  — Get current user profile
         └── sessions/route.ts     # GET  — List active sessions
 ```
 
@@ -464,6 +465,24 @@ Client                          Server                         Database
 **Rate Limited:** No
 
 **Success (200):** Rotates both tokens, updates session in DB
+
+### `GET /api/v1/auth/me`
+**Auth:** Requires `accessToken` cookie or `Authorization: Bearer <token>` header
+**Rate Limited:** No
+
+**Success (200):**
+```json
+{
+  "user": {
+    "id": 1,
+    "name": "Super Admin",
+    "email": "admin@snoy.com",
+    "role": "super_admin",
+    "createdAt": "2026-07-22T...",
+    "updatedAt": "2026-07-22T..."
+  }
+}
+```
 
 ---
 
