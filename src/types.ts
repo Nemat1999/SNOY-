@@ -4,6 +4,7 @@ export interface CategoryItem {
   id: string;
   name: string;
   description: string;
+  image?: string;
 }
 
 export interface ExpenseItem {

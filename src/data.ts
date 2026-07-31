@@ -401,16 +401,19 @@ export const DEFAULT_CATEGORIES: CategoryItem[] = [
     id: "cat-1",
     name: "Men's Clothing",
     description: "Tailored garments, classic shapes, and high-density textures designed for durability.",
+    image: "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?q=80&w=600&auto=format&fit=crop",
   },
   {
     id: "cat-2",
     name: "Women's Clothing",
     description: "Structured tailoring and organic cotton layers displaying simple sculptural elegance.",
+    image: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?q=80&w=600&auto=format&fit=crop",
   },
   {
     id: "cat-3",
     name: "Home Decor",
     description: "Architectural travertine elements, handmade stoneware, and curated ambient home decorations.",
+    image: "https://images.unsplash.com/photo-1507473885765-e6ed057f782c?q=80&w=600&auto=format&fit=crop",
   },
 ];
 

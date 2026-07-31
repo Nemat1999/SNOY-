@@ -1,7 +1,11 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-export function middleware(request: NextRequest) {
+/**
+ * Admin Authentication Middleware
+ * Checks access and refresh tokens for protected admin routes.
+ */
+export function adminAuthMiddleware(request: NextRequest): NextResponse | null {
   const { pathname } = request.nextUrl;
 
   const accessToken = request.cookies.get('accessToken')?.value;
@@ -30,11 +34,5 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(dashboardUrl);
   }
 
-  return NextResponse.next();
+  return null;
 }
-
-export const config = {
-  matcher: [
-    '/admin/:path*',
-  ],
-};
