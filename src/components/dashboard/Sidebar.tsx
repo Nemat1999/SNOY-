@@ -32,7 +32,7 @@ export default function Sidebar({ activeTab, setActiveTab, onLogout }: SidebarPr
     : "AD";
 
   return (
-    <aside className="w-64 bg-white border-r border-stone-200 flex flex-col h-screen shrink-0 select-none">
+    <aside className="w-64 bg-white border-r border-stone-200 flex flex-col h-screen shrink-0 select-none sticky top-0 left-0 z-30">
       {/* Brand Header */}
       <div className="px-6 py-8 border-b border-stone-150 flex items-center gap-1.5 shrink-0">
         <span className="font-display text-lg font-bold tracking-tight uppercase text-stone-950">

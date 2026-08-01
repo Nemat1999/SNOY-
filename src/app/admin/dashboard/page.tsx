@@ -149,7 +149,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-stone-50/50 text-stone-900 font-sans flex overflow-hidden">
+    <div className="h-screen w-full bg-stone-50/50 text-stone-900 font-sans flex overflow-hidden">
       {/* Toast Alert Banner */}
       <AnimatePresence>
         {alertMessage && (
@@ -177,7 +177,7 @@ export default function DashboardPage() {
       />
 
       {/* Main panel content scroll area */}
-      <main className="flex-1 overflow-y-auto px-6 py-8 sm:px-10">
+      <main className="flex-1 h-screen overflow-y-auto px-6 py-8 sm:px-10">
         <AnimatePresence mode="wait">
           <motion.div
             key={activeTab}
