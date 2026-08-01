@@ -193,14 +193,14 @@ export default function SettingsTab({ triggerAlert }: SettingsTabProps) {
                 onChange={(e) => setCurrency(e.target.value)}
                 className="w-full rounded-xl border border-stone-200 px-3.5 py-2.5 text-xs focus:border-stone-900 focus:outline-none bg-white cursor-pointer"
               >
-                <option value="USD">USD ($) United States</option>
+                <option value="USD">PKR (Rs) United States</option>
                 <option value="EUR">EUR (€) Euro</option>
                 <option value="GBP">GBP (£) British Pound</option>
               </select>
             </div>
             <div className="space-y-1.5">
               <label className="text-[10px] font-bold uppercase tracking-wider text-stone-500 block">
-                Standard Shipping Charge ($)
+                Standard Shipping Charge (PKR)
               </label>
               <input
                 type="number"

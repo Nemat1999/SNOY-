@@ -126,7 +126,7 @@ export default function ReviewsTab({ products, setProducts, triggerAlert }: Revi
                           {product.name}
                         </h4>
                         <p className="text-[10px] text-stone-400 mt-0.5 font-bold uppercase tracking-wider">
-                          ${product.price}
+                          PKR {product.price}
                         </p>
                       </div>
                     </div>

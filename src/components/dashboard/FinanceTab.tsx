@@ -181,7 +181,7 @@ export default function FinanceTab({
               <div key={cat} className="border border-stone-100 rounded-xl p-3 bg-stone-50/50 flex flex-col justify-between h-24">
                 <div>
                   <h4 className="text-[10px] font-bold text-stone-400 uppercase tracking-wider">{cat}</h4>
-                  <p className="text-xs font-bold text-stone-900 mt-1 font-mono">${amt.toFixed(0)}</p>
+                  <p className="text-xs font-bold text-stone-900 mt-1 font-mono">PKR {amt.toFixed(0)}</p>
                 </div>
                 <div className="w-full bg-stone-200 h-1 rounded-full overflow-hidden mt-2">
                   <div style={{ width: `${pct}%` }} className="bg-stone-900 h-full rounded-full" />
@@ -214,7 +214,7 @@ export default function FinanceTab({
                   <td className="py-3.5 px-4 text-stone-500 font-mono">{e.date}</td>
                   <td className="py-3.5 px-4 font-semibold text-stone-900">{e.category}</td>
                   <td className="py-3.5 px-4 text-stone-550 max-w-xs truncate">{e.description}</td>
-                  <td className="py-3.5 px-4 font-mono font-semibold text-stone-900">${e.amount.toFixed(2)}</td>
+                  <td className="py-3.5 px-4 font-mono font-semibold text-stone-900">PKR {e.amount.toFixed(2)}</td>
                   <td className="py-3.5 px-4 text-right">
                     <button
                       onClick={() => handleDelete(e.id)}
@@ -296,7 +296,7 @@ export default function FinanceTab({
 
               <div className="space-y-1.5">
                 <label className="text-[10px] font-bold uppercase tracking-wider text-stone-500 block">
-                  Logged Amount ($) *
+                  Logged Amount (PKR) *
                 </label>
                 <input
                   type="number"

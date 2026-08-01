@@ -68,7 +68,7 @@ export default function OrdersTab({ orders, setOrders, triggerAlert }: OrdersTab
                       <p className="text-[10px] text-stone-400 leading-none mt-0.5">{o.shippingAddress.email}</p>
                     </div>
                   </td>
-                  <td className="py-3.5 px-4 font-mono font-semibold text-stone-900">${o.total.toFixed(2)}</td>
+                  <td className="py-3.5 px-4 font-mono font-semibold text-stone-900">PKR {o.total.toFixed(2)}</td>
                   <td className="py-3.5 px-4">
                     <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-wider ${
                       o.status === "Delivered"
@@ -231,7 +231,7 @@ export default function OrdersTab({ orders, setOrders, triggerAlert }: OrdersTab
                         </div>
                       </div>
                       <div className="text-right">
-                        <p className="font-semibold text-stone-900 font-mono">${item.price}</p>
+                        <p className="font-semibold text-stone-900 font-mono">PKR {item.price}</p>
                         <p className="text-[10px] text-stone-450 mt-0.5">Qty: {item.quantity}</p>
                       </div>
                     </div>
@@ -271,15 +271,15 @@ export default function OrdersTab({ orders, setOrders, triggerAlert }: OrdersTab
               <div className="border-t border-stone-100 pt-4 flex flex-col items-end space-y-2 text-xs">
                 <div className="w-56 flex justify-between">
                   <span className="text-stone-450">Subtotal:</span>
-                  <span className="font-mono text-stone-900">${selectedOrder.subtotal.toFixed(2)}</span>
+                  <span className="font-mono text-stone-900">PKR {selectedOrder.subtotal.toFixed(2)}</span>
                 </div>
                 <div className="w-56 flex justify-between">
                   <span className="text-stone-450">Shipping charges:</span>
-                  <span className="font-mono text-stone-900">${selectedOrder.shipping.toFixed(2)}</span>
+                  <span className="font-mono text-stone-900">PKR {selectedOrder.shipping.toFixed(2)}</span>
                 </div>
                 <div className="w-56 flex justify-between border-t border-stone-150 pt-2 text-sm">
                   <span className="font-bold text-stone-850 uppercase tracking-wider text-[10px]">Grand Total:</span>
-                  <span className="font-mono font-bold text-stone-950">${selectedOrder.total.toFixed(2)}</span>
+                  <span className="font-mono font-bold text-stone-950">PKR {selectedOrder.total.toFixed(2)}</span>
                 </div>
               </div>
 

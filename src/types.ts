@@ -25,9 +25,13 @@ export interface Review {
 
 export interface Product {
   id: string;
+  sku?: string;
   name: string;
   category: Category;
+  categoryId?: string;
   price: number;
+  compareAtPrice?: number;
+  stock?: number;
   description: string;
   rating: number;
   reviewCount: number;
@@ -36,6 +40,7 @@ export interface Product {
   colors?: { name: string; hex: string }[];
   details: string[];
   featured?: boolean;
+  status?: "active" | "draft" | "archived" | string;
   reviews?: Review[];
 }
 

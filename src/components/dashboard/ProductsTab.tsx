@@ -1,8 +1,12 @@
 "use client";
 
-import React, { useState } from "react";
-import { Plus, Edit2, Trash2, Search, X, Check, ArrowRight } from "lucide-react";
-import { Product, Category, CategoryItem } from "../../types";
+import React, { useState, useEffect } from "react";
+import { Plus, Edit2, Trash2, Loader2, ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
+import { Product, CategoryItem } from "../../types";
+import ProductModalForm from "./ProductModalForm";
+import ProductViewModal from "./ProductViewModal";
+import ProductTableRow from "./ProductTableRow";
+import SearchBar from "../SearchBar";
 
 interface ProductsTabProps {
   products: Product[];
@@ -11,135 +15,137 @@ interface ProductsTabProps {
   triggerAlert: (text: string, type?: "success" | "info") => void;
 }
 
-export default function ProductsTab({ products, setProducts, categories, triggerAlert }: ProductsTabProps) {
+export default function ProductsTab({ categories, triggerAlert }: ProductsTabProps) {
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState<Category | "All">("All");
+  const [selectedCategory, setSelectedCategory] = useState<string>("All");
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
-  // Form State for Add / Edit
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   
-  const [name, setName] = useState("");
-  const [price, setPrice] = useState("");
-  const [category, setCategory] = useState<Category>("");
-  const [description, setDescription] = useState("");
-  const [imageUrl, setImageUrl] = useState("");
-  const [sizes, setSizes] = useState("");
-  const [details, setDetails] = useState("");
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  const [viewingProduct, setViewingProduct] = useState<Product | null>(null);
+  
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Pagination & Server-side state
+  const [localProducts, setLocalProducts] = useState<Product[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalProducts, setTotalProducts] = useState(0);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      setIsLoading(true);
+      try {
+        const limit = 10;
+        const offset = (currentPage - 1) * limit;
+        const queryParams = new URLSearchParams({ limit: limit.toString(), offset: offset.toString() });
+        
+        if (searchQuery) queryParams.append("search", searchQuery);
+        
+        // Ensure we handle category correctly based on the selected string 
+        // It could be category name or ID, so the backend handles it gracefully
+        if (selectedCategory !== "All") queryParams.append("category", selectedCategory);
+
+        const res = await fetch(`/api/v1/products?${queryParams.toString()}`);
+        const data = await res.json();
+        
+        if (data.success && data.products) {
+          setLocalProducts(data.products);
+          setTotalProducts(data.total);
+          setTotalPages(Math.max(1, Math.ceil(data.total / limit)));
+        }
+      } catch (error) {
+        console.error("Failed to fetch products:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    const timer = setTimeout(() => {
+      fetchProducts();
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [currentPage, searchQuery, selectedCategory, refreshTrigger]);
+
+  const handleSearchChange = (val: string) => {
+    setSearchQuery(val);
+    setCurrentPage(1); // Reset to page 1 on search
+  };
+
+  const handleCategoryChange = (val: string) => {
+    setSelectedCategory(val);
+    setCurrentPage(1); // Reset to page 1 on category change
+    setIsDropdownOpen(false);
+  };
 
   const handleOpenAddForm = () => {
     setEditingProduct(null);
-    setName("");
-    setPrice("");
-    setCategory(categories[0]?.name || "Men's Clothing");
-    setDescription("");
-    setImageUrl("");
-    setSizes("S, M, L");
-    setDetails("100% Organic, Tailored Fit, Made in Italy");
     setIsFormOpen(true);
   };
 
   const handleOpenEditForm = (product: Product) => {
     setEditingProduct(product);
-    setName(product.name);
-    setPrice(product.price.toString());
-    setCategory(product.category);
-    setDescription(product.description);
-    setImageUrl(product.images[0] || "");
-    setSizes(product.sizes ? product.sizes.join(", ") : "");
-    setDetails(product.details.join(", "));
     setIsFormOpen(true);
   };
 
-  const handleDelete = (productId: string) => {
+  const handleOpenViewModal = (product: Product) => {
+    setViewingProduct(product);
+    setIsViewModalOpen(true);
+  };
+
+  const handleDelete = async (productId: string) => {
     if (confirm("Are you sure you want to delete this product from the showroom?")) {
-      setProducts((prev) => prev.filter((p) => p.id !== productId));
-      triggerAlert("Product deleted successfully.", "info");
+      try {
+        const res = await fetch(`/api/v1/products/${productId}`, { method: "DELETE" });
+        if (res.ok) {
+          setRefreshTrigger(prev => prev + 1);
+          triggerAlert("Product deleted successfully.", "info");
+        } else {
+          const data = await res.json();
+          alert(data.error || "Failed to delete product");
+        }
+      } catch (err) {
+        console.error("Backend delete error:", err);
+        alert("Network error. Could not delete product.");
+      }
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!name.trim() || !price.trim() || !description.trim()) {
-      alert("Please fill in all required fields.");
-      return;
+  const handleFormSubmit = async (data: any) => {
+    try {
+      if (editingProduct) {
+        const res = await fetch(`/api/v1/products/${editingProduct.id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data),
+        });
+        const resData = await res.json();
+        if (!res.ok) throw new Error(resData.error || "Failed to update product");
+        
+        triggerAlert("Product updated successfully.");
+      } else {
+        const res = await fetch("/api/v1/products", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data),
+        });
+        const resData = await res.json();
+        if (!res.ok) throw new Error(resData.error || "Failed to create product");
+        
+        triggerAlert("Product added to showroom catalog.");
+      }
+      
+      // Trigger a refetch of the paginated list to reflect changes
+      setRefreshTrigger(prev => prev + 1);
+    } catch (err: any) {
+      console.error("Submit Error:", err);
+      alert(err.message || "Failed to save product.");
+      throw err; // re-throw to prevent modal from closing if error
     }
-
-    const priceNum = parseFloat(price);
-    if (isNaN(priceNum) || priceNum <= 0) {
-      alert("Please enter a valid price.");
-      return;
-    }
-
-    const imagesArray = imageUrl.trim()
-      ? [imageUrl.trim()]
-      : ["https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?q=80&w=600&auto=format&fit=crop"];
-
-    const sizesArray = sizes.trim()
-      ? sizes.split(",").map((s) => s.trim()).filter((s) => s !== "")
-      : [];
-
-    const detailsArray = details.trim()
-      ? details.split(",").map((d) => d.trim()).filter((d) => d !== "")
-      : ["Premium quality garment", "Sculptural aesthetic structure"];
-
-    if (editingProduct) {
-      // Edit mode
-      setProducts((prev) =>
-        prev.map((p) =>
-          p.id === editingProduct.id
-            ? {
-                ...p,
-                name: name.trim(),
-                price: priceNum,
-                category,
-                description: description.trim(),
-                images: imagesArray,
-                sizes: sizesArray.length > 0 ? sizesArray : undefined,
-                details: detailsArray,
-              }
-            : p
-        )
-      );
-      triggerAlert("Product updated successfully.");
-    } else {
-      // Add mode
-      const newProduct: Product = {
-        id: `p-${Date.now()}`,
-        name: name.trim(),
-        price: priceNum,
-        category,
-        description: description.trim(),
-        rating: 5.0,
-        reviewCount: 0,
-        images: imagesArray,
-        sizes: sizesArray.length > 0 ? sizesArray : undefined,
-        colors:
-          category === "Home Decor"
-            ? [{ name: "Travertine", hex: "#d6ccc2" }]
-            : [
-                { name: "Off-White", hex: "#f5f5f4" },
-                { name: "Charcoal", hex: "#292524" },
-              ],
-        details: detailsArray,
-        featured: true,
-        reviews: [],
-      };
-      setProducts((prev) => [newProduct, ...prev]);
-      triggerAlert("Product added to showroom catalog.");
-    }
-
-    setIsFormOpen(false);
   };
-
-  const filteredProducts = products.filter((p) => {
-    const matchesCategory = selectedCategory === "All" || p.category === selectedCategory;
-    const matchesSearch =
-      p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      p.description.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesCategory && matchesSearch;
-  });
 
   return (
     <div className="space-y-8 select-none">
@@ -150,7 +156,7 @@ export default function ProductsTab({ products, setProducts, categories, trigger
           <h1 className="font-display text-2xl font-bold uppercase tracking-wider text-stone-950">
             Showroom Catalog
           </h1>
-          <p className="text-xs text-stone-400 mt-1">Manage e-commerce products, prices, and sizes.</p>
+          <p className="text-xs text-stone-400 mt-1">Manage e-commerce products, prices, and inventory sizes.</p>
         </div>
         <button
           onClick={handleOpenAddForm}
@@ -164,277 +170,150 @@ export default function ProductsTab({ products, setProducts, categories, trigger
       <div className="flex flex-col sm:flex-row gap-4 justify-between items-stretch">
         
         {/* Search */}
-        <div className="relative flex-1 max-w-md">
-          <input
-            type="text"
-            placeholder="Search catalog..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full rounded-xl border border-stone-200 bg-white pl-9 pr-4 py-2.5 text-xs focus:border-stone-900 focus:outline-none"
+        <div className="flex-1 max-w-md">
+          <SearchBar 
+            value={searchQuery} 
+            onChange={handleSearchChange} 
+            placeholder="Search catalog..." 
           />
-          <Search className="absolute left-3 top-3.5 h-3.5 w-3.5 text-stone-400" />
         </div>
 
         {/* Categories filters */}
-        <div className="flex gap-2 items-center overflow-x-auto shrink-0 pb-1 sm:pb-0">
-          <button
-            onClick={() => setSelectedCategory("All")}
-            className={`px-3 py-2 rounded-xl text-xs font-semibold uppercase tracking-wider transition-all cursor-pointer ${
-              selectedCategory === "All"
-                ? "bg-stone-900 text-white font-bold"
-                : "bg-white text-stone-500 border border-stone-200 hover:text-stone-850"
-            }`}
+        <div className="relative shrink-0 w-full sm:w-56">
+          <button 
+            type="button"
+            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+            onBlur={() => setTimeout(() => setIsDropdownOpen(false), 200)}
+            className="w-full flex items-center justify-between rounded-xl border border-stone-200 bg-white px-4 py-2.5 text-xs font-semibold focus:border-stone-900 focus:outline-none shadow-sm cursor-pointer text-stone-700 hover:bg-stone-50 transition-colors"
           >
-            All Items
+            <span className="truncate pr-2">
+              {selectedCategory === "All" 
+                ? "All Categories" 
+                : categories.find(c => c.name === selectedCategory || c.id === selectedCategory)?.name || selectedCategory}
+            </span>
+            <ChevronDown className={`w-4 h-4 text-stone-400 transition-transform ${isDropdownOpen ? "rotate-180" : ""}`} />
           </button>
-          {categories.map((cat) => (
-            <button
-              key={cat.id}
-              onClick={() => setSelectedCategory(cat.name)}
-              className={`px-3 py-2 rounded-xl text-xs font-semibold uppercase tracking-wider transition-all cursor-pointer ${
-                selectedCategory === cat.name
-                  ? "bg-stone-900 text-white font-bold"
-                  : "bg-white text-stone-500 border border-stone-200 hover:text-stone-850"
-              }`}
-            >
-              {cat.name}
-            </button>
-          ))}
-        </div>
-      </div>
 
-      {/* Catalog Table */}
-      <div className="bg-white border border-stone-200 rounded-2xl shadow-xs overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse text-xs">
-            <thead>
-              <tr className="border-b border-stone-100 text-[10px] font-bold uppercase tracking-wider text-stone-400 bg-stone-50/50">
-                <th className="py-3.5 px-4 w-20">Preview</th>
-                <th className="py-3.5 px-4">Product Name</th>
-                <th className="py-3.5 px-4">Category</th>
-                <th className="py-3.5 px-4">Price</th>
-                <th className="py-3.5 px-4">Sizes</th>
-                <th className="py-3.5 px-4 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredProducts.map((p) => (
-                <tr key={p.id} className="border-b border-stone-100 last:border-0 hover:bg-stone-50/40 transition-colors">
-                  <td className="py-3 px-4">
-                    <div className="h-12 w-12 rounded-lg overflow-hidden border border-stone-200 bg-stone-50 shrink-0">
-                      <img src={p.images[0]} alt={p.name} className="h-full w-full object-cover" />
+          {isDropdownOpen && (
+            <div className="absolute top-full right-0 mt-2 w-full bg-white border border-stone-200 rounded-xl shadow-lg z-50 py-1.5 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+              <div className="max-h-60 overflow-y-auto">
+                <div 
+                  onClick={() => handleCategoryChange("All")}
+                  className={`px-4 py-2.5 text-xs font-semibold cursor-pointer transition-colors ${selectedCategory === "All" ? "bg-stone-100 text-stone-900" : "text-stone-600 hover:bg-stone-50 hover:text-stone-900"}`}
+                >
+                  All Categories
+                </div>
+                {categories.map((cat) => {
+                  const isSelected = selectedCategory === cat.name || selectedCategory === cat.id;
+                  return (
+                    <div 
+                      key={cat.id}
+                      onClick={() => handleCategoryChange(cat.name || cat.id)}
+                      className={`px-4 py-2.5 text-xs font-semibold cursor-pointer transition-colors ${isSelected ? "bg-stone-100 text-stone-900" : "text-stone-600 hover:bg-stone-50 hover:text-stone-900"}`}
+                    >
+                      {cat.name}
                     </div>
-                  </td>
-                  <td className="py-3 px-4">
-                    <div className="max-w-xs pr-4">
-                      <p className="font-semibold text-stone-900 truncate">{p.name}</p>
-                      <p className="text-[10px] text-stone-400 truncate mt-0.5">{p.description}</p>
-                    </div>
-                  </td>
-                  <td className="py-3 px-4 text-stone-500 font-medium">{p.category}</td>
-                  <td className="py-3 px-4 font-mono font-semibold text-stone-900">${p.price}</td>
-                  <td className="py-3 px-4">
-                    <div className="flex gap-1 flex-wrap">
-                      {p.sizes ? (
-                        p.sizes.map((s) => (
-                          <span key={s} className="bg-stone-100 text-stone-600 rounded px-1.5 py-0.5 text-[9px] font-bold uppercase font-mono">
-                            {s}
-                          </span>
-                        ))
-                      ) : (
-                        <span className="text-[10px] text-stone-400 italic">One Size</span>
-                      )}
-                    </div>
-                  </td>
-                  <td className="py-3 px-4 text-right">
-                    <div className="flex justify-end gap-2.5">
-                      <button
-                        onClick={() => handleOpenEditForm(p)}
-                        className="p-2 rounded-lg border border-stone-200 hover:border-stone-400 hover:bg-stone-50 text-stone-600 hover:text-stone-900 transition-all cursor-pointer active:scale-95"
-                        title="Edit Details"
-                      >
-                        <Edit2 className="h-3.5 w-3.5" />
-                      </button>
-                      <button
-                        onClick={() => handleDelete(p.id)}
-                        className="p-2 rounded-lg border border-stone-200 hover:border-red-300 hover:bg-red-50 text-stone-600 hover:text-red-650 transition-all cursor-pointer active:scale-95"
-                        title="Delete Product"
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-
-              {filteredProducts.length === 0 && (
-                <tr>
-                  <td colSpan={6} className="py-12 text-center text-stone-450 font-medium">
-                    No products matching search criteria.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* Add / Edit Slider Form Dialog */}
-      {isFormOpen && (
-        <div className="fixed inset-0 z-50 overflow-hidden flex justify-end">
-          {/* Backdrop */}
-          <div
-            onClick={() => setIsFormOpen(false)}
-            className="absolute inset-0 bg-stone-900/25 backdrop-blur-xs transition-opacity"
-          />
-
-          {/* Form Content */}
-          <div className="relative w-screen max-w-md bg-white shadow-2xl flex flex-col h-full z-10 border-l border-stone-200">
-            {/* Header */}
-            <div className="px-6 py-5 border-b border-stone-150 flex items-center justify-between bg-stone-950 text-white">
-              <div>
-                <h3 className="text-xs font-bold uppercase tracking-wider">
-                  {editingProduct ? "Modify Product Details" : "Introduce New Product"}
-                </h3>
-                <p className="text-[10px] text-stone-400 mt-0.5">Define metadata tags and assets</p>
+                  );
+                })}
               </div>
-              <button
-                onClick={() => setIsFormOpen(false)}
-                className="text-stone-400 hover:text-white p-1"
-              >
-                <X className="h-5 w-5" />
-              </button>
             </div>
+          )}
+        </div>
+      </div>
 
-            {/* Form Fields */}
-            <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto px-6 py-5 space-y-4">
-              {/* Product Name */}
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-bold uppercase tracking-wider text-stone-500 block">
-                  Product Title *
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="e.g. Raw Japanese Selvedge Denim"
-                  className="w-full rounded-xl border border-stone-200 px-3.5 py-2.5 text-xs focus:border-stone-900 focus:outline-none"
-                />
-              </div>
+      {isLoading ? (
+        <div className="flex items-center justify-center py-20 text-stone-400">
+          <Loader2 className="w-8 h-8 animate-spin" />
+        </div>
+      ) : (
+        /* Catalog Table */
+        <div className="space-y-4">
+          <div className="bg-white border border-stone-200 rounded-2xl shadow-xs overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse text-xs">
+                <thead>
+                  <tr className="border-b border-stone-100 text-[10px] font-bold uppercase tracking-wider text-stone-400 bg-stone-50/50">
+                    <th className="py-3.5 px-4 w-20">Preview</th>
+                    <th className="py-3.5 px-4">Product Name</th>
+                    <th className="py-3.5 px-4">Category</th>
+                    <th className="py-3.5 px-4">Price</th>
+                    <th className="py-3.5 px-4">Sizes / Stock</th>
+                    <th className="py-3.5 px-4 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {localProducts.map((p) => (
+                    <ProductTableRow 
+                      key={p.id}
+                      product={p}
+                      categories={categories}
+                      onView={handleOpenViewModal}
+                      onEdit={handleOpenEditForm}
+                      onDelete={handleDelete}
+                    />
+                  ))}
 
-              {/* Price & Category Row */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold uppercase tracking-wider text-stone-500 block">
-                    Retail Price ($) *
-                  </label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    required
-                    value={price}
-                    onChange={(e) => setPrice(e.target.value)}
-                    placeholder="e.g. 180"
-                    className="w-full rounded-xl border border-stone-200 px-3.5 py-2.5 text-xs focus:border-stone-900 focus:outline-none"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold uppercase tracking-wider text-stone-500 block">
-                    Category *
-                  </label>
-                  <select
-                    value={category}
-                    onChange={(e) => setCategory(e.target.value)}
-                    className="w-full rounded-xl border border-stone-200 px-3.5 py-2.5 text-xs focus:border-stone-950 focus:outline-none bg-white cursor-pointer"
-                  >
-                    {categories.map((cat) => (
-                      <option key={cat.id} value={cat.name}>
-                        {cat.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              {/* Description */}
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-bold uppercase tracking-wider text-stone-500 block">
-                  Catalog Description *
-                </label>
-                <textarea
-                  required
-                  rows={3}
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  placeholder="A detailed narrative highlighting materials, textures, and clean geometry..."
-                  className="w-full rounded-xl border border-stone-200 px-3.5 py-2.5 text-xs focus:border-stone-900 focus:outline-none resize-none"
-                />
-              </div>
-
-              {/* Image URL */}
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-bold uppercase tracking-wider text-stone-500 block">
-                  Image URL
-                </label>
-                <input
-                  type="url"
-                  value={imageUrl}
-                  onChange={(e) => setImageUrl(e.target.value)}
-                  placeholder="https://images.unsplash.com/..."
-                  className="w-full rounded-xl border border-stone-200 px-3.5 py-2.5 text-xs focus:border-stone-900 focus:outline-none"
-                />
-              </div>
-
-              {/* Sizes */}
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-bold uppercase tracking-wider text-stone-500 block">
-                  Available Sizes (Comma Separated)
-                </label>
-                <input
-                  type="text"
-                  value={sizes}
-                  onChange={(e) => setSizes(e.target.value)}
-                  placeholder="e.g. S, M, L, XL"
-                  className="w-full rounded-xl border border-stone-200 px-3.5 py-2.5 text-xs focus:border-stone-900 focus:outline-none"
-                />
-              </div>
-
-              {/* Custom Details list */}
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-bold uppercase tracking-wider text-stone-500 block">
-                  Material details (Comma Separated)
-                </label>
-                <textarea
-                  rows={2}
-                  value={details}
-                  onChange={(e) => setDetails(e.target.value)}
-                  placeholder="e.g. Dry clean only, 100% Cashmere, Hand loomed"
-                  className="w-full rounded-xl border border-stone-200 px-3.5 py-2.5 text-xs focus:border-stone-900 focus:outline-none resize-none"
-                />
-              </div>
-
-              {/* Actions Footer */}
-              <div className="pt-4 border-t border-stone-100 flex gap-3">
-                <button
-                  type="button"
-                  onClick={() => setIsFormOpen(false)}
-                  className="flex-1 rounded-xl border border-stone-200 hover:border-stone-400 py-3 text-xs font-bold uppercase tracking-wider text-stone-700 hover:text-stone-950 transition-all cursor-pointer text-center active:scale-98"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="flex-1 rounded-xl bg-stone-950 py-3 text-xs font-bold uppercase tracking-wider text-white hover:bg-stone-850 shadow-md transition-all cursor-pointer flex items-center justify-center gap-1.5 active:scale-98"
-                >
-                  {editingProduct ? "Save Changes" : "Create Item"} <ArrowRight className="h-4 w-4" />
-                </button>
-              </div>
-            </form>
+                  {localProducts.length === 0 && (
+                    <tr>
+                      <td colSpan={6} className="py-12 text-center text-stone-450 font-medium">
+                        No products matching search criteria.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
+
+          {/* Pagination UI */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between px-2 pt-2 pb-4">
+              <p className="text-xs text-stone-500 font-medium hidden sm:block">
+                Showing <span className="font-bold text-stone-900">{totalProducts === 0 ? 0 : (currentPage - 1) * 10 + 1}</span> to{" "}
+                <span className="font-bold text-stone-900">{Math.min(currentPage * 10, totalProducts)}</span> of{" "}
+                <span className="font-bold text-stone-900">{totalProducts}</span> entries
+              </p>
+              
+              <div className="flex items-center gap-2 sm:ml-auto">
+                <button
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                  className="p-1.5 rounded-lg border border-stone-200 text-stone-500 hover:text-stone-900 hover:bg-stone-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+                <div className="text-xs font-semibold text-stone-700 min-w-24 text-center">
+                  Page {currentPage} of {totalPages}
+                </div>
+                <button
+                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                  disabled={currentPage === totalPages}
+                  className="p-1.5 rounded-lg border border-stone-200 text-stone-500 hover:text-stone-900 hover:bg-stone-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
+      {/* Add / Edit Slider Form Dialog */}
+      <ProductModalForm
+        isOpen={isFormOpen}
+        onClose={() => setIsFormOpen(false)}
+        onSubmit={handleFormSubmit}
+        initialData={editingProduct}
+        categories={categories}
+        triggerAlert={triggerAlert}
+      />
+
+      <ProductViewModal
+        isOpen={isViewModalOpen}
+        onClose={() => setIsViewModalOpen(false)}
+        product={viewingProduct}
+        categories={categories}
+      />
     </div>
   );
 }

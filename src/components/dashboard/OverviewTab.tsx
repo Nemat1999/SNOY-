@@ -16,7 +16,7 @@ export default function OverviewTab({ products, orders }: OverviewTabProps) {
   const avgOrderValue = totalOrders > 0 ? parseFloat((totalRevenue / totalOrders).toFixed(2)) : 0;
   const totalProductCount = products.length;
 
-  // Let's identify low stock (e.g. mock threshold where a product is "Low Stock" if its price is under $100 and it has no sizes - just for showing high-fidelity data!)
+  // Let's identify low stock (e.g. mock threshold where a product is "Low Stock" if its price is under PKR 100 and it has no sizes - just for showing high-fidelity data!)
   const lowStockProducts = products.filter(p => !p.sizes || p.sizes.length === 0).slice(0, 3);
 
   // Dynamic Category Sales Share breakdown
@@ -203,7 +203,7 @@ export default function OverviewTab({ products, orders }: OverviewTabProps) {
                       </span>
                     </div>
                   </div>
-                  <span className="text-[10px] font-bold font-mono text-stone-650">${p.price}</span>
+                  <span className="text-[10px] font-bold font-mono text-stone-650">PKR {p.price}</span>
                 </div>
               ))}
 
@@ -277,7 +277,7 @@ export default function OverviewTab({ products, orders }: OverviewTabProps) {
               </div>
               <div className="border border-stone-100 rounded-xl p-4 bg-stone-50/50">
                 <span className="text-[9px] font-bold uppercase tracking-wider text-stone-450">Recommendation Sales</span>
-                <p className="font-display text-lg font-bold text-stone-900 mt-1 font-mono">$4,820</p>
+                <p className="font-display text-lg font-bold text-stone-900 mt-1 font-mono">PKR 4,820</p>
                 <span className="text-[9px] text-emerald-600 font-semibold mt-1.5 block">26.1% conversion</span>
               </div>
             </div>

@@ -251,7 +251,7 @@ export default function DiscountsTab({ coupons, setCoupons, triggerAlert }: Disc
                       className="w-full rounded-xl border border-stone-200 px-3.5 py-2.5 text-xs text-stone-800 focus:border-stone-400 focus:outline-none"
                     >
                       <option value="percentage">Percentage (%)</option>
-                      <option value="fixed">Fixed Amount ($)</option>
+                      <option value="fixed">Fixed Amount (PKR)</option>
                     </select>
                   </div>
 

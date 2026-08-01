@@ -35,6 +35,7 @@ import CartDrawer from "../components/CartDrawer";
 import CheckoutModal from "../components/CheckoutModal";
 import AiStylist from "../components/AiStylist";
 import AuthModal from "../components/AuthModal";
+import CategoryDropdown from "../components/CategoryDropdown";
 import { useAuth } from "../context/AuthContext";
 
 
@@ -331,55 +332,26 @@ export default function Page() {
       <header className="sticky top-0 z-35 border-b border-stone-100 bg-white/80 backdrop-blur-md">
         <div className="mx-auto flex max-w-7xl h-20 items-center justify-between px-4 sm:px-6 lg:px-8">
           
-          {/* Brand Logo */}
-          <div className="flex items-center gap-1.5">
-            <span className="font-display text-xl font-bold tracking-tight uppercase text-stone-950">
-              Atelier
-            </span>
-            <span className="h-1.5 w-1.5 rounded-full bg-stone-900" />
+          {/* Left side: Logo and Categories */}
+          <div className="flex items-center gap-8">
+            {/* Brand Logo */}
+            <div className="flex items-center gap-1.5">
+              <span className="font-display text-xl font-bold tracking-tight uppercase text-stone-950">
+                Atelier
+              </span>
+              <span className="h-1.5 w-1.5 rounded-full bg-stone-900" />
+            </div>
+
+            {/* Desktop Nav Categories */}
+            <nav className="hidden md:flex items-center gap-6">
+              <CategoryDropdown 
+                categories={categories}
+                selectedCategory={selectedCategory}
+                setSelectedCategory={setSelectedCategory}
+              />
+            </nav>
           </div>
 
-          {/* Desktop Nav Categories */}
-          <nav className="hidden md:flex gap-8 text-xs font-semibold uppercase tracking-widest text-stone-500">
-            <button
-              onClick={() => {
-                setSelectedCategory("All");
-                document.getElementById("showroom")?.scrollIntoView({ behavior: "smooth" });
-              }}
-              className={`relative py-1.5 transition-colors hover:text-stone-900 cursor-pointer ${
-                selectedCategory === "All" ? "text-stone-955 font-bold" : ""
-              }`}
-            >
-              All
-              {selectedCategory === "All" && (
-                <motion.span
-                  layoutId="activeCategoryUnderline"
-                  className="absolute bottom-0 left-0 h-0.5 w-full bg-stone-950"
-                />
-              )}
-            </button>
-            {categories.map((cat) => (
-              <button
-                key={cat.id}
-                onClick={() => {
-                  setSelectedCategory(cat.name);
-                  // Scroll smoothly to shop section
-                  document.getElementById("showroom")?.scrollIntoView({ behavior: "smooth" });
-                }}
-                className={`relative py-1.5 transition-colors hover:text-stone-900 cursor-pointer ${
-                  selectedCategory === cat.name ? "text-stone-955 font-bold" : ""
-                }`}
-              >
-                {cat.name}
-                {selectedCategory === cat.name && (
-                  <motion.span
-                    layoutId="activeCategoryUnderline"
-                    className="absolute bottom-0 left-0 h-0.5 w-full bg-stone-955"
-                  />
-                )}
-              </button>
-            ))}
-          </nav>
 
           {/* Action Icons */}
           <div className="flex items-center gap-4">
