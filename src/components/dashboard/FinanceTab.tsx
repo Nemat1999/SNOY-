@@ -77,17 +77,17 @@ export default function FinanceTab({
 
   const formattedSales = new Intl.NumberFormat("en-US", {
     style: "currency",
-    currency: "USD",
+    currency: "PKR",
   }).format(totalSales);
 
   const formattedExpenses = new Intl.NumberFormat("en-US", {
     style: "currency",
-    currency: "USD",
+    currency: "PKR",
   }).format(totalExpenses);
 
   const formattedProfit = new Intl.NumberFormat("en-US", {
     style: "currency",
-    currency: "USD",
+    currency: "PKR",
   }).format(netProfit);
 
   return (
@@ -151,10 +151,10 @@ export default function FinanceTab({
             <span className="text-[10px] font-bold uppercase tracking-wider text-stone-450">
               Net Profit Margin
             </span>
-            <h3 className={`font-display text-2xl font-bold ${netProfit >= 0 ? "text-emerald-700" : "text-red-700"}`}>
+            <h3 className={`font-display text-2xl font-bold PKR {netProfit >= 0 ? "text-emerald-700" : "text-red-700"}`}>
               {formattedProfit}
             </h3>
-            <span className={`text-[9px] font-semibold flex items-center gap-1 ${netProfit >= 0 ? "text-emerald-600" : "text-red-500"}`}>
+            <span className={`text-[9px] font-semibold flex items-center gap-1 PKR {netProfit >= 0 ? "text-emerald-600" : "text-red-500"}`}>
               {netProfit >= 0 ? <TrendingUp className="h-3.5 w-3.5" /> : <TrendingDown className="h-3.5 w-3.5" />}
               {netProfit >= 0 ? "Profitable return" : "Net operating deficit"}
             </span>

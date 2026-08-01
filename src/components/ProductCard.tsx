@@ -115,7 +115,7 @@ export default function ProductCard({
             {product.name}
           </h3>
           <span className="text-sm font-semibold text-stone-950">
-            ${product.price}
+            PKR {product.price}
           </span>
         </div>
 

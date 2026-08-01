@@ -104,7 +104,7 @@ export default function CustomersTab({ orders, setOrders, triggerAlert }: Custom
                     </span>
                   </td>
                   <td className="py-4 px-4 text-right font-mono font-bold text-stone-950">
-                    ${c.totalSpend.toFixed(2)}
+                    PKR {c.totalSpend.toFixed(2)}
                   </td>
                 </tr>
               ))}

@@ -29,7 +29,7 @@ export default function CartDrawer({
 
   const subtotal = cartItems.reduce((acc, item) => acc + item.product.price * item.quantity, 0);
 
-  // Free shipping over $150
+  // Free shipping over PKR 150
   const freeShippingThreshold = 150;
   const shippingCost = subtotal >= freeShippingThreshold || subtotal === 0 ? 0 : 15;
   const promoDiscount = subtotal * (discountPercent / 100);
@@ -55,7 +55,7 @@ export default function CartDrawer({
               return;
             }
             if (match.minSpend && subtotal < match.minSpend) {
-              setPromoError(`Minimum spend of $${match.minSpend} required`);
+              setPromoError(`Minimum spend of PKR ${match.minSpend} required`);
               return;
             }
             setPromoApplied(true);
@@ -144,7 +144,7 @@ export default function CartDrawer({
                       </span>
                     ) : (
                       <span>
-                        Add <strong className="text-stone-900">${freeShippingThreshold - subtotal}</strong> more for Free Shipping
+                        Add <strong className="text-stone-900">PKR {freeShippingThreshold - subtotal}</strong> more for Free Shipping
                       </span>
                     )}
                     <span className="text-stone-400">{Math.round(shippingPercent)}%</span>
@@ -201,7 +201,7 @@ export default function CartDrawer({
                             {item.product.name}
                           </h4>
                           <span className="text-xs font-bold text-stone-950 whitespace-nowrap">
-                            ${item.product.price * item.quantity}
+                            PKR {item.product.price * item.quantity}
                           </span>
                         </div>
 
@@ -299,27 +299,27 @@ export default function CartDrawer({
                   <div className="space-y-2 border-t border-stone-100 pt-3 text-xs text-stone-600">
                     <div className="flex justify-between">
                       <span>Subtotal</span>
-                      <span className="font-semibold text-stone-900">${subtotal}</span>
+                      <span className="font-semibold text-stone-900">PKR {subtotal}</span>
                     </div>
                     {promoApplied && (
                       <div className="flex justify-between text-emerald-600 font-medium">
                         <span>Discount</span>
-                        <span>-${promoDiscount.toFixed(2)}</span>
+                        <span>-PKR {promoDiscount.toFixed(2)}</span>
                       </div>
                     )}
                     <div className="flex justify-between">
                       <span>Shipping</span>
                       <span className="font-semibold text-stone-900">
-                        {shippingCost === 0 ? "Free" : `$${shippingCost}`}
+                        {shippingCost === 0 ? "Free" : `PKR ${shippingCost}`}
                       </span>
                     </div>
                     <div className="flex justify-between">
                       <span>Estimated Tax (8%)</span>
-                      <span className="font-semibold text-stone-900">${taxCost.toFixed(2)}</span>
+                      <span className="font-semibold text-stone-900">PKR {taxCost.toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between border-t border-stone-100 pt-3 text-sm font-bold text-stone-900">
                       <span>Total</span>
-                      <span>${finalTotal.toFixed(2)}</span>
+                      <span>PKR {finalTotal.toFixed(2)}</span>
                     </div>
                   </div>
 

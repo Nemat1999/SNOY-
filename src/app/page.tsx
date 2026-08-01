@@ -28,7 +28,7 @@ import {
 } from "lucide-react";
 
 import { Category, Product, CartItem, Order, Review, CategoryItem } from "../types";
-import { PRODUCTS, DEFAULT_ORDERS } from "../data";
+import { DEFAULT_ORDERS } from "../data";
 import ProductCard from "../components/ProductCard";
 import ProductDetailModal from "../components/ProductDetailModal";
 import CartDrawer from "../components/CartDrawer";
@@ -40,7 +40,7 @@ import { useAuth } from "../context/AuthContext";
 
 
 export default function Page() {
-  const [products, setProducts] = useState<Product[]>(PRODUCTS);
+  const [products, setProducts] = useState<Product[]>([]);
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [wishlist, setWishlist] = useState<string[]>([]);
   const [orders, setOrders] = useState<Order[]>(DEFAULT_ORDERS);
@@ -79,18 +79,33 @@ export default function Page() {
   useEffect(() => {
     setIsMounted(true);
 
-    const dbVersion = localStorage.getItem("minimal_db_version_v2");
-    if (dbVersion !== "3") {
-      localStorage.setItem("minimal_products", JSON.stringify(PRODUCTS));
-      localStorage.setItem("minimal_orders", JSON.stringify(DEFAULT_ORDERS));
-      localStorage.setItem("minimal_db_version_v2", "3");
+    const fetchData = async () => {
+      try {
+        const [prodRes, catRes] = await Promise.all([
+          fetch("/api/v1/products?limit=100"),
+          fetch("/api/v1/categories")
+        ]);
+        const prodData = await prodRes.json();
+        const catData = await catRes.json();
 
-      setProducts(PRODUCTS);
+        if (prodData.success && prodData.products) {
+          setProducts(prodData.products);
+        }
+        if (catData.success && catData.categories) {
+          setCategories(catData.categories);
+        }
+      } catch (err) {
+        console.error("Failed to fetch data:", err);
+      }
+    };
+    fetchData();
+
+    const dbVersion = localStorage.getItem("minimal_db_version_live_products");
+    if (dbVersion !== "1") {
+      localStorage.setItem("minimal_orders", JSON.stringify(DEFAULT_ORDERS));
+      localStorage.setItem("minimal_db_version_live_products", "1");
       setOrders(DEFAULT_ORDERS);
     } else {
-      const savedProducts = localStorage.getItem("minimal_products");
-      if (savedProducts) setProducts(JSON.parse(savedProducts));
-
       const savedOrders = localStorage.getItem("minimal_orders");
       setOrders(savedOrders ? JSON.parse(savedOrders) : DEFAULT_ORDERS);
     }
@@ -101,24 +116,10 @@ export default function Page() {
     const savedWishlist = localStorage.getItem("minimal_wishlist");
     if (savedWishlist) setWishlist(JSON.parse(savedWishlist));
 
-    const savedCategories = localStorage.getItem("minimal_categories");
-    if (savedCategories) {
-      setCategories(JSON.parse(savedCategories));
-    } else {
-      setCategories([
-        { id: "cat-1", name: "Men's Clothing", description: "" },
-        { id: "cat-2", name: "Women's Clothing", description: "" },
-        { id: "cat-3", name: "Home Decor", description: "" }
-      ]);
-    }
+    // Categories are now fetched from API
   }, []);
 
   // --- STORAGE SYNCS (only sync after mounted) ---
-  useEffect(() => {
-    if (isMounted) {
-      localStorage.setItem("minimal_products", JSON.stringify(products));
-    }
-  }, [products, isMounted]);
 
   useEffect(() => {
     if (isMounted) {
@@ -286,11 +287,12 @@ export default function Page() {
 
   // --- FILTERS & SORTING LOGIC ---
   const filteredProducts = products.filter((product) => {
-    const matchesCategory = selectedCategory === "All" || product.category === selectedCategory;
+    const productCategory = product.category || (product as any).categoryName || (product as any).categoryDetails?.name;
+    const matchesCategory = selectedCategory === "All" || productCategory === selectedCategory;
     const matchesSearch =
       product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       product.description.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesPrice = product.price <= maxPrice;
+    const matchesPrice = maxPrice >= 350 ? true : product.price <= maxPrice;
     return matchesCategory && matchesSearch && matchesPrice;
   });
 
@@ -325,7 +327,7 @@ export default function Page() {
 
       {/* Top Banner / Announcement */}
       <div className="bg-stone-900 py-2.5 text-center text-[10px] font-bold uppercase tracking-widest text-stone-100">
-        Enjoy complimentary shipping on all orders over $150 • Enter code <strong className="text-amber-200">MINIMAL20</strong> for 20% off
+        Enjoy complimentary shipping on all orders over PKR 150 • Enter code <strong className="text-amber-200">MINIMAL20</strong> for 20% off
       </div>
 
       {/* Navigation Header */}
@@ -596,7 +598,7 @@ export default function Page() {
                 {/* Price Range Filter Slider */}
                 <div>
                   <div className="flex justify-between items-center mb-3">
-                    <h4 className="text-xs font-bold uppercase tracking-wider text-stone-800">Max Price: ${maxPrice}</h4>
+                    <h4 className="text-xs font-bold uppercase tracking-wider text-stone-800">Max Price: PKR {maxPrice}</h4>
                     <button onClick={() => setMaxPrice(350)} className="text-[10px] font-bold uppercase tracking-wider text-stone-400 hover:text-stone-600">
                       Reset
                     </button>
@@ -611,10 +613,10 @@ export default function Page() {
                     className="w-full accent-stone-900 bg-stone-100 h-1.5 rounded-full"
                   />
                   <div className="flex justify-between text-[10px] text-stone-400 mt-2 font-medium">
-                    <span>$40</span>
-                    <span>$150</span>
-                    <span>$250</span>
-                    <span>$350+</span>
+                    <span>PKR 40</span>
+                    <span>PKR 150</span>
+                    <span>PKR 250</span>
+                    <span>PKR 350+</span>
                   </div>
                 </div>
 

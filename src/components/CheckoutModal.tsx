@@ -258,7 +258,7 @@ export default function CheckoutModal({
                         maxLength={19}
                         placeholder="4111 2222 3333 4444"
                         value={cardNumber}
-                        onChange={(e) => setCardNumber(e.target.value.replace(/\s?/g, '').replace(/(\d{4})/g, '$1 ').trim())}
+                        onChange={(e) => setCardNumber(e.target.value.replace(/\s?/g, '').replace(/(\d{4})/g, 'PKR 1 ').trim())}
                         className="w-full rounded-xl border border-stone-200 pl-10 pr-3.5 py-2.5 text-xs focus:border-stone-900 focus:outline-none"
                       />
                       <CreditCard className="absolute left-3 top-3 h-4 w-4 text-stone-400" />
@@ -355,7 +355,7 @@ export default function CheckoutModal({
                       onClick={handlePlaceOrder}
                       className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-stone-950 py-3 text-xs font-bold text-white shadow-lg transition-all hover:bg-stone-850 active:scale-98"
                     >
-                      Place Secure Order (${total.toFixed(2)})
+                      Place Secure Order (PKR {total.toFixed(2)})
                     </button>
                   </div>
                 </div>
@@ -404,7 +404,7 @@ export default function CheckoutModal({
                                 {item.quantity}x • {item.size && `Size ${item.size}`} {item.color && `• Color ${item.color}`}
                               </p>
                             </div>
-                            <span className="text-xs font-bold text-stone-800">${item.price * item.quantity}</span>
+                            <span className="text-xs font-bold text-stone-800">PKR {item.price * item.quantity}</span>
                           </div>
                         ))}
                       </div>
@@ -413,21 +413,21 @@ export default function CheckoutModal({
                     <div className="border-t border-stone-100 pt-3 space-y-1.5 text-xs text-stone-600">
                       <div className="flex justify-between">
                         <span>Subtotal</span>
-                        <span>${generatedOrder.subtotal.toFixed(2)}</span>
+                        <span>PKR {generatedOrder.subtotal.toFixed(2)}</span>
                       </div>
                       {discountAmount > 0 && (
                         <div className="flex justify-between text-emerald-600 font-medium">
                           <span>Discount Applied</span>
-                          <span>-${discountAmount.toFixed(2)}</span>
+                          <span>-PKR {discountAmount.toFixed(2)}</span>
                         </div>
                       )}
                       <div className="flex justify-between">
                         <span>Shipping & Delivery</span>
-                        <span>{generatedOrder.shipping === 0 ? "Free" : `$${generatedOrder.shipping}`}</span>
+                        <span>{generatedOrder.shipping === 0 ? "Free" : `PKR ${generatedOrder.shipping}`}</span>
                       </div>
                       <div className="flex justify-between font-bold text-stone-900 border-t border-stone-100 pt-3">
                         <span>Amount Paid</span>
-                        <span>${generatedOrder.total.toFixed(2)}</span>
+                        <span>PKR {generatedOrder.total.toFixed(2)}</span>
                       </div>
                     </div>
                   </div>
@@ -465,7 +465,7 @@ export default function CheckoutModal({
                             Qty {item.quantity} {item.selectedSize && `• Size ${item.selectedSize}`}
                           </p>
                         </div>
-                        <span className="text-xs font-bold text-stone-900">${item.product.price * item.quantity}</span>
+                        <span className="text-xs font-bold text-stone-900">PKR {item.product.price * item.quantity}</span>
                       </div>
                     ))}
                   </div>
@@ -474,25 +474,25 @@ export default function CheckoutModal({
                 <div className="border-t border-stone-200 pt-4 mt-6 space-y-2.5 text-xs text-stone-600">
                   <div className="flex justify-between">
                     <span>Subtotal</span>
-                    <span className="font-semibold text-stone-900">${subtotal.toFixed(2)}</span>
+                    <span className="font-semibold text-stone-900">PKR {subtotal.toFixed(2)}</span>
                   </div>
                   {discountAmount > 0 && (
                     <div className="flex justify-between text-emerald-600 font-medium">
                       <span>Promo discount</span>
-                      <span>-${discountAmount.toFixed(2)}</span>
+                      <span>-PKR {discountAmount.toFixed(2)}</span>
                     </div>
                   )}
                   <div className="flex justify-between">
                     <span>Shipping</span>
-                    <span className="font-semibold text-stone-900">{shippingCost === 0 ? "Free" : `$${shippingCost}`}</span>
+                    <span className="font-semibold text-stone-900">{shippingCost === 0 ? "Free" : `PKR ${shippingCost}`}</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Estimated Tax (8%)</span>
-                    <span className="font-semibold text-stone-900">${taxCost.toFixed(2)}</span>
+                    <span className="font-semibold text-stone-900">PKR {taxCost.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between border-t border-stone-200 pt-3 text-sm font-bold text-stone-900">
                     <span>Grand Total</span>
-                    <span>${total.toFixed(2)}</span>
+                    <span>PKR {total.toFixed(2)}</span>
                   </div>
                 </div>
               </div>

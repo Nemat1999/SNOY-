@@ -255,7 +255,7 @@ export default function AiStylist({ cartItems, onAddToCart, recentlyViewed = [] 
                                     <h4 className="text-[11px] font-bold text-stone-800 line-clamp-1">
                                       {rec.name}
                                     </h4>
-                                    <p className="text-[10px] text-stone-500 font-medium">${rec.price}</p>
+                                    <p className="text-[10px] text-stone-500 font-medium">PKR {rec.price}</p>
                                   </div>
                                   <div className="flex items-center justify-end mt-1.5">
                                     <button

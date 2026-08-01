@@ -57,10 +57,35 @@ export default function ProductModalForm({
 
   const [detailsInput, setDetailsInput] = useState("");
   const [sizesInput, setSizesInput] = useState("");
+  const [colorNameInput, setColorNameInput] = useState("");
+  const [colorHexInput, setColorHexInput] = useState("#000000");
   
   const [isUploading, setIsUploading] = useState(false);
   const [uploadStatus, setUploadStatus] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const addColor = () => {
+    if (!colorNameInput.trim()) return;
+    const isDuplicate = (formData.colors || []).some(
+      (c) => c.name.toLowerCase() === colorNameInput.trim().toLowerCase()
+    );
+    if (isDuplicate) {
+      alert("Color name already exists");
+      return;
+    }
+    setFormData((prev) => ({
+      ...prev,
+      colors: [...(prev.colors || []), { name: colorNameInput.trim(), hex: colorHexInput }],
+    }));
+    setColorNameInput("");
+  };
+
+  const removeColor = (name: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      colors: (prev.colors || []).filter((c) => c.name !== name),
+    }));
+  };
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -372,6 +397,65 @@ export default function ProductModalForm({
                 placeholder="S, M, L, XL"
                 className="w-full rounded-xl border border-stone-200 px-3.5 py-2.5 text-xs focus:border-stone-900 focus:outline-none font-medium"
               />
+            </div>
+
+            {/* Colors Section */}
+            <div className="space-y-2 border-t border-stone-100 pt-3">
+              <label className="text-[10px] font-bold uppercase tracking-wider text-stone-600 block">Product Colors</label>
+              
+              {/* Added Colors List */}
+              <div className="flex flex-wrap gap-2 mb-2">
+                {formData.colors && formData.colors.length > 0 ? (
+                  formData.colors.map((color) => (
+                    <span
+                      key={color.name}
+                      className="inline-flex items-center gap-1.5 rounded-full border border-stone-200 bg-stone-50 px-2.5 py-1 text-[11px] font-medium text-stone-800"
+                    >
+                      <span
+                        className="h-2.5 w-2.5 rounded-full border border-stone-300"
+                        style={{ backgroundColor: color.hex }}
+                      />
+                      <span>{color.name}</span>
+                      <button
+                        type="button"
+                        onClick={() => removeColor(color.name)}
+                        className="text-stone-400 hover:text-stone-600 transition-colors shrink-0"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </span>
+                  ))
+                ) : (
+                  <span className="text-xs text-stone-400 italic">No colors added yet</span>
+                )}
+              </div>
+
+              {/* Add Color Input Field */}
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={colorNameInput}
+                  onChange={(e) => setColorNameInput(e.target.value)}
+                  placeholder="e.g. Charcoal Black"
+                  className="flex-1 rounded-xl border border-stone-200 px-3.5 py-2 text-xs focus:border-stone-900 focus:outline-none font-medium"
+                />
+                <div className="flex items-center gap-1 border border-stone-200 rounded-xl px-2.5 bg-stone-50 shrink-0">
+                  <input
+                    type="color"
+                    value={colorHexInput}
+                    onChange={(e) => setColorHexInput(e.target.value)}
+                    className="w-5 h-5 border-0 cursor-pointer p-0 bg-transparent rounded"
+                  />
+                  <span className="text-[10px] font-mono font-semibold uppercase">{colorHexInput}</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={addColor}
+                  className="rounded-xl bg-stone-900 hover:bg-stone-850 text-white font-bold text-xs px-3.5 py-2 transition-all cursor-pointer"
+                >
+                  Add
+                </button>
+              </div>
             </div>
           </div>
 

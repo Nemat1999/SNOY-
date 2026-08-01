@@ -163,7 +163,7 @@ export default function ProductDetailModal({
               <h1 className="mt-2 text-2xl font-semibold text-stone-900 leading-tight">
                 {product.name}
               </h1>
-              <p className="mt-2.5 text-xl font-bold text-stone-950">${product.price}</p>
+              <p className="mt-2.5 text-xl font-bold text-stone-950">PKR {product.price}</p>
 
               {/* Rating */}
               <div className="mt-3 flex items-center gap-2">

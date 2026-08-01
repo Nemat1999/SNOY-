@@ -13,7 +13,7 @@ export default function SettingsTab({ triggerAlert }: SettingsTabProps) {
 
   const [storeName, setStoreName] = useState("Atelier Showroom");
   const [contactEmail, setContactEmail] = useState("concierge@atelierstore.com");
-  const [currency, setCurrency] = useState("USD");
+  const [currency, setCurrency] = useState("PKR");
   const [shippingFee, setShippingFee] = useState("15");
   const [notifyNewOrders, setNotifyNewOrders] = useState(true);
   const [notifyLowStock, setNotifyLowStock] = useState(true);
@@ -193,7 +193,7 @@ export default function SettingsTab({ triggerAlert }: SettingsTabProps) {
                 onChange={(e) => setCurrency(e.target.value)}
                 className="w-full rounded-xl border border-stone-200 px-3.5 py-2.5 text-xs focus:border-stone-900 focus:outline-none bg-white cursor-pointer"
               >
-                <option value="USD">PKR (Rs) United States</option>
+                <option value="PKR">PKR (Rs) Pakistani Rupee</option>
                 <option value="EUR">EUR (€) Euro</option>
                 <option value="GBP">GBP (£) British Pound</option>
               </select>

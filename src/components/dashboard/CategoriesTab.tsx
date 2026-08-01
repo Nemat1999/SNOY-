@@ -1,9 +1,19 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Plus, Edit2, Trash2, Search, Tag, ImageIcon, FolderCheck, Loader2 } from "lucide-react";
+import {
+  Plus,
+  Edit2,
+  Trash2,
+  Search,
+  Tag,
+  ImageIcon,
+  FolderCheck,
+  Loader2,
+} from "lucide-react";
 import { CategoryItem, Product } from "../../types";
 import CategoryModalForm from "./CategoryModalForm";
+import CategoryProductsModal from "./CategoryProductsModal";
 import SearchBar from "../SearchBar";
 import Tooltip from "../ui/Tooltip";
 
@@ -22,26 +32,41 @@ export default function CategoriesTab({
 }: CategoriesTabProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [editingCategory, setEditingCategory] = useState<CategoryItem | null>(null);
+  const [editingCategory, setEditingCategory] = useState<CategoryItem | null>(
+    null,
+  );
   const [isLoading, setIsLoading] = useState(false);
+  const [liveProducts, setLiveProducts] = useState<Product[]>([]);
+
+  const [selectedCategoryView, setSelectedCategoryView] =
+    useState<CategoryItem | null>(null);
+  const [isProductsModalOpen, setIsProductsModalOpen] = useState(false);
 
   // Fetch from API on mount
   useEffect(() => {
-    const fetchCategories = async () => {
+    const fetchData = async () => {
       setIsLoading(true);
       try {
-        const res = await fetch("/api/v1/categories");
-        const data = await res.json();
-        if (data.success && data.categories) {
-          setCategories(data.categories);
+        const [catRes, prodRes] = await Promise.all([
+          fetch("/api/v1/categories"),
+          fetch("/api/v1/products?limit=1000"),
+        ]);
+        const catData = await catRes.json();
+        const prodData = await prodRes.json();
+
+        if (catData.success && catData.categories) {
+          setCategories(catData.categories);
+        }
+        if (prodData.success && prodData.products) {
+          setLiveProducts(prodData.products);
         }
       } catch (error) {
-        console.error("Failed to fetch categories:", error);
+        console.error("Failed to fetch data:", error);
       } finally {
         setIsLoading(false);
       }
     };
-    fetchCategories();
+    fetchData();
   }, [setCategories]);
 
   const handleOpenAddForm = () => {
@@ -55,20 +80,27 @@ export default function CategoriesTab({
   };
 
   const handleDelete = async (categoryId: string, categoryName: string) => {
-    const hasProducts = products.some(
-      (p) => p.category?.toLowerCase() === categoryName.toLowerCase() || p.categoryId === categoryId
+    const hasProducts = liveProducts.some(
+      (p) =>
+        p.category?.toLowerCase() === categoryName.toLowerCase() ||
+        (p as any).categoryName?.toLowerCase() === categoryName.toLowerCase() ||
+        p.categoryId === categoryId,
     );
 
     if (hasProducts) {
       alert(
-        `Cannot delete category "${categoryName}". There are active products in the showroom assigned to this category.`
+        `Cannot delete category "${categoryName}". There are active products in the showroom assigned to this category.`,
       );
       return;
     }
 
-    if (confirm(`Are you sure you want to delete category "${categoryName}"?`)) {
+    if (
+      confirm(`Are you sure you want to delete category "${categoryName}"?`)
+    ) {
       try {
-        const res = await fetch(`/api/v1/categories/${categoryId}`, { method: "DELETE" });
+        const res = await fetch(`/api/v1/categories/${categoryId}`, {
+          method: "DELETE",
+        });
         if (res.ok) {
           setCategories((prev) => prev.filter((c) => c.id !== categoryId));
           triggerAlert("Category removed successfully.", "info");
@@ -83,7 +115,11 @@ export default function CategoriesTab({
     }
   };
 
-  const handleFormSubmit = async (data: { name: string; description: string; image: string }) => {
+  const handleFormSubmit = async (data: {
+    name: string;
+    description: string;
+    image: string;
+  }) => {
     try {
       if (editingCategory) {
         const res = await fetch(`/api/v1/categories/${editingCategory.id}`, {
@@ -93,13 +129,11 @@ export default function CategoriesTab({
         });
         const resData = await res.json();
         if (!res.ok) throw new Error(resData.error || "Failed to update");
-        
+
         setCategories((prev) =>
           prev.map((c) =>
-            c.id === editingCategory.id
-              ? { ...c, ...data }
-              : c
-          )
+            c.id === editingCategory.id ? { ...c, ...data } : c,
+          ),
         );
         triggerAlert("Category profile updated successfully.");
       } else {
@@ -110,7 +144,7 @@ export default function CategoriesTab({
         });
         const resData = await res.json();
         if (!res.ok) throw new Error(resData.error || "Failed to create");
-        
+
         const createdCategory = resData.category || {
           id: `cat-${Date.now()}`,
           ...data,
@@ -128,7 +162,7 @@ export default function CategoriesTab({
   const filteredCategories = categories.filter(
     (c) =>
       c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      c.description.toLowerCase().includes(searchQuery.toLowerCase())
+      c.description.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
   return (
@@ -140,7 +174,12 @@ export default function CategoriesTab({
             Showroom Categories
           </h1>
           <p className="text-xs text-stone-400 mt-1">
-            Configure dynamic category groupings. Pictures automatically route to Cloudinary folder <span className="font-mono text-stone-700 bg-stone-100 px-1.5 py-0.5 rounded text-[10px]">snoy/categories</span>.
+            Configure dynamic category groupings. Pictures automatically route
+            to Cloudinary folder{" "}
+            <span className="font-mono text-stone-700 bg-stone-100 px-1.5 py-0.5 rounded text-[10px]">
+              snoy/categories
+            </span>
+            .
           </p>
         </div>
         <button
@@ -153,10 +192,10 @@ export default function CategoriesTab({
 
       {/* Search */}
       <div className="max-w-md">
-        <SearchBar 
-          value={searchQuery} 
-          onChange={setSearchQuery} 
-          placeholder="Search categories..." 
+        <SearchBar
+          value={searchQuery}
+          onChange={setSearchQuery}
+          placeholder="Search categories..."
         />
       </div>
 
@@ -167,8 +206,12 @@ export default function CategoriesTab({
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredCategories.map((c) => {
-            const productCount = products.filter(
-              (p) => p.category?.toLowerCase() === c.name.toLowerCase() || p.categoryId === c.id
+            const productCount = liveProducts.filter(
+              (p) =>
+                p.category?.toLowerCase() === c.name.toLowerCase() ||
+                (p as any).categoryName?.toLowerCase() ===
+                  c.name.toLowerCase() ||
+                p.categoryId === c.id,
             ).length;
 
             return (
@@ -188,7 +231,9 @@ export default function CategoriesTab({
                     ) : (
                       <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-stone-100 to-stone-200 text-stone-400">
                         <ImageIcon className="h-10 w-10 stroke-[1.5] mb-1 opacity-60" />
-                        <span className="text-[10px] font-mono uppercase tracking-wider text-stone-500">No Image Uploaded</span>
+                        <span className="text-[10px] font-mono uppercase tracking-wider text-stone-500">
+                          No Image Uploaded
+                        </span>
                       </div>
                     )}
 
@@ -196,10 +241,12 @@ export default function CategoriesTab({
                     <div className="absolute inset-0 bg-gradient-to-t from-stone-950/70 via-stone-950/20 to-transparent flex flex-col justify-between p-4">
                       <div className="flex justify-between items-start">
                         <span className="bg-stone-950/80 backdrop-blur-md text-stone-200 rounded-lg px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider font-mono border border-white/10 flex items-center gap-1">
-                          <FolderCheck className="h-3 w-3 text-emerald-400" /> Cloudinary
+                          <FolderCheck className="h-3 w-3 text-emerald-400" />{" "}
+                          Cloudinary
                         </span>
                         <span className="bg-white/90 backdrop-blur-md text-stone-900 rounded-full px-2.5 py-0.5 text-[9px] font-extrabold uppercase tracking-wider font-mono shadow-xs">
-                          {productCount} {productCount === 1 ? "Product" : "Products"}
+                          {productCount}{" "}
+                          {productCount === 1 ? "Product" : "Products"}
                         </span>
                       </div>
 
@@ -218,23 +265,34 @@ export default function CategoriesTab({
                 </div>
 
                 {/* Actions Footer */}
-                <div className="px-5 pb-5 pt-2 flex justify-end gap-2 border-t border-stone-100">
-                  <Tooltip content="Edit Category">
-                    <button
-                      onClick={() => handleOpenEditForm(c)}
-                      className="p-2 rounded-xl border border-stone-200 hover:border-stone-400 hover:bg-stone-50 text-stone-700 hover:text-stone-950 transition-all cursor-pointer text-xs font-semibold flex items-center gap-1.5 active:scale-95"
-                    >
-                      <Edit2 className="h-3.5 w-3.5" /> Edit
-                    </button>
-                  </Tooltip>
-                  <Tooltip content="Delete Category">
-                    <button
-                      onClick={() => handleDelete(c.id, c.name)}
-                      className="p-2 rounded-xl border border-stone-200 hover:border-red-300 hover:bg-red-50 text-stone-600 hover:text-red-650 transition-all cursor-pointer text-xs font-semibold flex items-center gap-1.5 active:scale-95"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" /> Delete
-                    </button>
-                  </Tooltip>
+                <div className="px-5 pb-5 pt-2 flex items-center justify-between gap-2 border-t border-stone-100">
+                  <button
+                    onClick={() => {
+                      setSelectedCategoryView(c);
+                      setIsProductsModalOpen(true);
+                    }}
+                    className="px-3 py-1.5 rounded-lg border border-stone-200 hover:border-stone-400 hover:bg-stone-50 text-stone-700 hover:text-stone-950 transition-all cursor-pointer text-xs font-bold"
+                  >
+                    View Items
+                  </button>
+                  <div className="flex justify-end gap-2">
+                    <Tooltip content="Edit Category">
+                      <button
+                        onClick={() => handleOpenEditForm(c)}
+                        className="p-2 rounded-xl border border-stone-200 hover:border-stone-400 hover:bg-stone-50 text-stone-700 hover:text-stone-950 transition-all cursor-pointer text-xs font-semibold flex items-center gap-1.5 active:scale-95"
+                      >
+                        <Edit2 className="h-3.5 w-3.5" /> Edit
+                      </button>
+                    </Tooltip>
+                    <Tooltip content="Delete Category">
+                      <button
+                        onClick={() => handleDelete(c.id, c.name)}
+                        className="p-2 rounded-xl border border-stone-200 hover:border-red-300 hover:bg-red-50 text-stone-600 hover:text-red-650 transition-all cursor-pointer text-xs font-semibold flex items-center gap-1.5 active:scale-95"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" /> Delete
+                      </button>
+                    </Tooltip>
+                  </div>
                 </div>
               </div>
             );
@@ -243,7 +301,9 @@ export default function CategoriesTab({
           {filteredCategories.length === 0 && (
             <div className="col-span-full py-16 bg-white border border-stone-200 rounded-2xl flex flex-col items-center justify-center text-center text-stone-400">
               <Tag className="h-8 w-8 text-stone-200 mb-2" />
-              <p className="text-xs font-semibold uppercase tracking-wider">No matching categories found</p>
+              <p className="text-xs font-semibold uppercase tracking-wider">
+                No matching categories found
+              </p>
             </div>
           )}
         </div>
@@ -256,6 +316,13 @@ export default function CategoriesTab({
         onSubmit={handleFormSubmit}
         initialData={editingCategory}
         triggerAlert={triggerAlert}
+      />
+
+      <CategoryProductsModal
+        isOpen={isProductsModalOpen}
+        onClose={() => setIsProductsModalOpen(false)}
+        category={selectedCategoryView}
+        products={liveProducts}
       />
     </div>
   );

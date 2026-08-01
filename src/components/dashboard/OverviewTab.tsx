@@ -57,13 +57,13 @@ export default function OverviewTab({ products, orders }: OverviewTabProps) {
   // Helper stats formatting
   const formattedRevenue = new Intl.NumberFormat("en-US", {
     style: "currency",
-    currency: "USD",
+    currency: "PKR",
     maximumFractionDigits: 0,
   }).format(totalRevenue);
 
   const formattedAOV = new Intl.NumberFormat("en-US", {
     style: "currency",
-    currency: "USD",
+    currency: "PKR",
   }).format(avgOrderValue);
 
   const kpis = [
@@ -243,7 +243,7 @@ export default function OverviewTab({ products, orders }: OverviewTabProps) {
                   <div key={catName} className="space-y-2">
                     <div className="flex justify-between items-center text-xs font-medium">
                       <span className="text-stone-700">{catName}</span>
-                      <span className="font-mono text-stone-900 font-bold">{percentage}% (${amount.toFixed(0)})</span>
+                      <span className="font-mono text-stone-900 font-bold">{percentage}% (PKR {amount.toFixed(0)})</span>
                     </div>
                     <div className="w-full bg-stone-100 h-2 rounded-full overflow-hidden">
                       <div
@@ -258,7 +258,7 @@ export default function OverviewTab({ products, orders }: OverviewTabProps) {
           </div>
           <div className="mt-6 text-[10px] text-stone-400 font-medium pt-3 border-t border-stone-100 flex justify-between">
             <span>Share based on sales revenue</span>
-            <span>Total: ${totalCatSales.toFixed(0)}</span>
+            <span>Total: PKR {totalCatSales.toFixed(0)}</span>
           </div>
         </div>
 
@@ -347,7 +347,7 @@ export default function OverviewTab({ products, orders }: OverviewTabProps) {
                     </span>
                   </td>
                   <td className="py-3 px-2 text-right font-mono font-semibold text-stone-900">
-                    ${order.total.toFixed(2)}
+                    PKR {order.total.toFixed(2)}
                   </td>
                 </tr>
               ))}
