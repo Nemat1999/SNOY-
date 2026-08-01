@@ -35,11 +35,17 @@ export async function authGuard(
   mode: 'basic' | 'strict' = 'basic'
 ): Promise<AuthResult> {
   // 1. Extract access token from cookies or Authorization header
-  const cookieStore = await cookies();
-  let token = cookieStore.get('accessToken')?.value;
+  let token: string | undefined;
+
+  try {
+    const cookieStore = await cookies();
+    token = cookieStore.get('accessToken')?.value;
+  } catch (err) {
+    // Outside Next.js request context (e.g. standalone test or CLI environment)
+  }
 
   if (!token) {
-    const authHeader = req.headers.get('authorization');
+    const authHeader = req.headers.get('authorization') || req.headers.get('Authorization');
     if (authHeader && authHeader.startsWith('Bearer ')) {
       token = authHeader.substring(7);
     }

@@ -7,7 +7,12 @@ module.exports = (sequelize, DataTypes) => {
      * Helper method for defining associations.
      */
     static associate(models) {
-      // association definitions if needed
+      if (models.Product) {
+        Category.hasMany(models.Product, {
+          foreignKey: 'categoryId',
+          as: 'products'
+        });
+      }
     }
   }
   Category.init({

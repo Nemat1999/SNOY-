@@ -4,6 +4,7 @@ import UserModel from '../../database/models/user.cjs';
 import SessionModel from '../../database/models/session.cjs';
 import RateLimitModel from '../../database/models/ratelimit.cjs';
 import CategoryModel from '../../database/models/category.cjs';
+import ProductModel from '../../database/models/product.cjs';
 import configJson from '../../database/config.cjs';
 
 const env = process.env.NODE_ENV || 'development';
@@ -27,8 +28,9 @@ const User = UserModel(sequelize, DataTypes);
 const Session = SessionModel(sequelize, DataTypes);
 const RateLimit = RateLimitModel(sequelize, DataTypes);
 const Category = CategoryModel(sequelize, DataTypes);
+const Product = ProductModel(sequelize, DataTypes);
 
-const models = { User, Session, RateLimit, Category };
+const models = { User, Session, RateLimit, Category, Product };
 
 // Set up associations
 Object.keys(models).forEach((modelName) => {
@@ -44,8 +46,9 @@ const db = {
   User,
   Session,
   RateLimit,
-  Category
+  Category,
+  Product
 };
 
 export default db;
-export { sequelize, Sequelize, User, Session, RateLimit, Category };
+export { sequelize, Sequelize, User, Session, RateLimit, Category, Product };
