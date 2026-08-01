@@ -21,7 +21,7 @@ async function verifyCRUD() {
       description: 'High-performance activewear and gym essentials.',
       image: 'https://images.unsplash.com/photo-1517838277536-f5f99be501cd?q=80&w=1000'
     });
-    console.log(`✅ Category Created: [${newCat.id}] ${newCat.name}`);
+    console.log(`✅ Category Created: [${(newCat as any).id}] ${(newCat as any).name}`);
 
     // 3. UPDATE (PUT Test)
     console.log('\n3️⃣ UPDATE: Modifying the created test category...');
@@ -32,7 +32,7 @@ async function verifyCRUD() {
       description: 'Updated activewear description with breathable fabrics.',
       name: `Updated Activewear ${Date.now()}`
     });
-    console.log(`✅ Category Updated: [${fetchedCat.id}] ${fetchedCat.name}`);
+    console.log(`✅ Category Updated: [${(fetchedCat as any).id}] ${(fetchedCat as any).name}`);
 
     // 4. DELETE (DELETE Test)
     console.log('\n4️⃣ DELETE: Removing test category from DB...');

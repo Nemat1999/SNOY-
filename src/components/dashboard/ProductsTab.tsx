@@ -7,6 +7,7 @@ import ProductModalForm from "./ProductModalForm";
 import ProductViewModal from "./ProductViewModal";
 import ProductTableRow from "./ProductTableRow";
 import SearchBar from "../SearchBar";
+import DeleteConfirmModal from "../ui/DeleteConfirmModal";
 
 interface ProductsTabProps {
   products: Product[];
@@ -34,6 +35,8 @@ export default function ProductsTab({ categories, triggerAlert }: ProductsTabPro
   const [totalPages, setTotalPages] = useState(1);
   const [totalProducts, setTotalProducts] = useState(0);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [productToDelete, setProductToDelete] = useState<Product | null>(null);
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -96,21 +99,28 @@ export default function ProductsTab({ categories, triggerAlert }: ProductsTabPro
     setIsViewModalOpen(true);
   };
 
-  const handleDelete = async (productId: string) => {
-    if (confirm("Are you sure you want to delete this product from the showroom?")) {
-      try {
-        const res = await fetch(`/api/v1/products/${productId}`, { method: "DELETE" });
-        if (res.ok) {
-          setRefreshTrigger(prev => prev + 1);
-          triggerAlert("Product deleted successfully.", "info");
-        } else {
-          const data = await res.json();
-          alert(data.error || "Failed to delete product");
-        }
-      } catch (err) {
-        console.error("Backend delete error:", err);
-        alert("Network error. Could not delete product.");
+  const handleDelete = (productId: string) => {
+    const prod = localProducts.find((p) => p.id === productId);
+    if (prod) {
+      setProductToDelete(prod);
+      setIsDeleteModalOpen(true);
+    }
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!productToDelete) return;
+    try {
+      const res = await fetch(`/api/v1/products/${productToDelete.id}`, { method: "DELETE" });
+      if (res.ok) {
+        setRefreshTrigger((prev) => prev + 1);
+        triggerAlert("Product deleted successfully.", "info");
+      } else {
+        const data = await res.json();
+        alert(data.error || "Failed to delete product");
       }
+    } catch (err) {
+      console.error("Backend delete error:", err);
+      alert("Network error. Could not delete product.");
     }
   };
 
@@ -313,6 +323,18 @@ export default function ProductsTab({ categories, triggerAlert }: ProductsTabPro
         onClose={() => setIsViewModalOpen(false)}
         product={viewingProduct}
         categories={categories}
+      />
+
+      <DeleteConfirmModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => {
+          setIsDeleteModalOpen(false);
+          setProductToDelete(null);
+        }}
+        onConfirm={handleConfirmDelete}
+        title="Delete Showroom Product"
+        message="Are you sure you want to permanently remove this product from the showroom catalog? This action cannot be undone."
+        itemName={productToDelete?.name}
       />
     </div>
   );

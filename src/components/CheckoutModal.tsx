@@ -23,19 +23,18 @@ export default function CheckoutModal({
   onOrderPlaced,
 }: CheckoutModalProps) {
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1); // 1: Shipping, 2: Payment, 3: Review, 4: Success
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Form states
   const [email, setEmail] = useState("");
   const [fullName, setFullName] = useState("");
   const [address, setAddress] = useState("");
-  const [city, setCity] = useState("");
+  const [city, setCity] = useState("Karachi");
+  const [province, setProvince] = useState("Punjab");
+  const [landmark, setLandmark] = useState("");
+  const [phone, setPhone] = useState("");
   const [postalCode, setPostalCode] = useState("");
-  const [country, setCountry] = useState("United States");
-
-  const [cardName, setCardName] = useState("");
-  const [cardNumber, setCardNumber] = useState("");
-  const [cardExpiry, setCardExpiry] = useState("");
-  const [cardCvc, setCardCvc] = useState("");
+  const [country, setCountry] = useState("Pakistan");
 
   const [generatedOrder, setGeneratedOrder] = useState<Order | null>(null);
 
@@ -47,10 +46,9 @@ export default function CheckoutModal({
 
   const handleNextStep = () => {
     if (step === 1) {
-      if (!email || !fullName || !address || !city || !postalCode) return;
+      if (!email || !fullName || !address || !city || !phone) return;
       setStep(2);
     } else if (step === 2) {
-      if (!cardName || !cardNumber || !cardExpiry || !cardCvc) return;
       setStep(3);
     }
   };
@@ -60,39 +58,63 @@ export default function CheckoutModal({
     if (step === 3) setStep(2);
   };
 
-  const handlePlaceOrder = () => {
-    const orderId = `MIN-${Math.floor(100000 + Math.random() * 900000)}`;
-    const today = new Date();
-    const dateString = today.toISOString().split("T")[0];
+  const handlePlaceOrder = async () => {
+    setIsSubmitting(true);
+    try {
+      const orderId = `MIN-${Math.floor(100000 + Math.random() * 900000)}`;
+      const today = new Date();
+      const dateString = today.toISOString().split("T")[0];
 
-    const newOrder: Order = {
-      id: orderId,
-      date: dateString,
-      items: cartItems.map((item) => ({
-        productName: item.product.name,
-        price: item.product.price,
-        quantity: item.quantity,
-        image: item.product.images[0],
-        size: item.selectedSize,
-        color: item.selectedColor?.name,
-      })),
-      subtotal,
-      shipping: shippingCost,
-      total,
-      shippingAddress: {
-        fullName,
-        email,
-        address,
-        city,
-        postalCode,
-        country,
-      },
-      status: "Processing",
-    };
+      const newOrder = {
+        id: orderId,
+        date: dateString,
+        items: cartItems.map((item) => ({
+          productName: item.product.name,
+          price: item.product.price,
+          quantity: item.quantity,
+          image: item.product.images[0],
+          size: item.selectedSize,
+          color: item.selectedColor?.name,
+        })),
+        subtotal,
+        shipping: shippingCost,
+        total,
+        shippingAddress: {
+          fullName,
+          email,
+          address: `${address}${landmark ? ` (Landmark: ${landmark})` : ""} | Phone: ${phone} | Province: ${province}`,
+          city,
+          postalCode: postalCode || "00000",
+          country,
+        },
+        status: "Processing",
+      };
 
-    setGeneratedOrder(newOrder);
-    onOrderPlaced(newOrder);
-    setStep(4);
+      const res = await fetch("/api/v1/orders", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(newOrder),
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || "Failed to submit order");
+      }
+
+      const resData = await res.json();
+      const savedOrder = resData.order || newOrder;
+
+      setGeneratedOrder(savedOrder);
+      onOrderPlaced(savedOrder);
+      setStep(4);
+    } catch (err: any) {
+      console.error("Fulfillment placement error:", err);
+      alert(err.message || "Something went wrong while placing the order.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -149,22 +171,22 @@ export default function CheckoutModal({
                 <div className="space-y-4">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-[10px] font-bold text-stone-500 uppercase tracking-wider mb-1.5">Full Name</label>
+                      <label className="block text-[10px] font-bold text-stone-500 uppercase tracking-wider mb-1.5">Full Name *</label>
                       <input
                         type="text"
                         required
-                        placeholder="Liam Parker"
+                        placeholder="e.g. Sajid Ali"
                         value={fullName}
                         onChange={(e) => setFullName(e.target.value)}
                         className="w-full rounded-xl border border-stone-200 px-3.5 py-2.5 text-xs focus:border-stone-900 focus:outline-none focus:ring-1 focus:ring-stone-900"
                       />
                     </div>
                     <div>
-                      <label className="block text-[10px] font-bold text-stone-500 uppercase tracking-wider mb-1.5">Email Address</label>
+                      <label className="block text-[10px] font-bold text-stone-500 uppercase tracking-wider mb-1.5">Email Address *</label>
                       <input
                         type="email"
                         required
-                        placeholder="liamparker@gmail.com"
+                        placeholder="sajidali@gmail.com"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         className="w-full rounded-xl border border-stone-200 px-3.5 py-2.5 text-xs focus:border-stone-900 focus:outline-none focus:ring-1 focus:ring-stone-900"
@@ -172,12 +194,36 @@ export default function CheckoutModal({
                     </div>
                   </div>
 
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-[10px] font-bold text-stone-500 uppercase tracking-wider mb-1.5">Phone Number (Mobile) *</label>
+                      <input
+                        type="text"
+                        required
+                        placeholder="e.g. 03001234567"
+                        value={phone}
+                        onChange={(e) => setPhone(e.target.value)}
+                        className="w-full rounded-xl border border-stone-200 px-3.5 py-2.5 text-xs focus:border-stone-900 focus:outline-none focus:ring-1 focus:ring-stone-900 font-mono"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold text-stone-500 uppercase tracking-wider mb-1.5">Nearest Landmark / Area</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. Near Shell Pump, Opp. Millennium Mall"
+                        value={landmark}
+                        onChange={(e) => setLandmark(e.target.value)}
+                        className="w-full rounded-xl border border-stone-200 px-3.5 py-2.5 text-xs focus:border-stone-900 focus:outline-none"
+                      />
+                    </div>
+                  </div>
+
                   <div>
-                    <label className="block text-[10px] font-bold text-stone-500 uppercase tracking-wider mb-1.5">Street Address</label>
+                    <label className="block text-[10px] font-bold text-stone-500 uppercase tracking-wider mb-1.5">Street Address (House #, Block/Sector, Area) *</label>
                     <input
                       type="text"
                       required
-                      placeholder="123 Minimalist Blvd, Suite 400"
+                      placeholder="e.g. House No. 45-B, Sector 11-A, North Karachi"
                       value={address}
                       onChange={(e) => setAddress(e.target.value)}
                       className="w-full rounded-xl border border-stone-200 px-3.5 py-2.5 text-xs focus:border-stone-900 focus:outline-none"
@@ -186,123 +232,119 @@ export default function CheckoutModal({
 
                   <div className="grid grid-cols-3 gap-3">
                     <div className="col-span-2">
-                      <label className="block text-[10px] font-bold text-stone-500 uppercase tracking-wider mb-1.5">City</label>
-                      <input
-                        type="text"
-                        required
-                        placeholder="New York"
+                      <label className="block text-[10px] font-bold text-stone-500 uppercase tracking-wider mb-1.5">City *</label>
+                      <select
                         value={city}
                         onChange={(e) => setCity(e.target.value)}
-                        className="w-full rounded-xl border border-stone-200 px-3.5 py-2.5 text-xs focus:border-stone-900 focus:outline-none"
-                      />
+                        className="w-full rounded-xl border border-stone-200 px-3.5 py-2.5 text-xs focus:border-stone-900 focus:outline-none bg-white cursor-pointer"
+                      >
+                        <option value="Karachi">Karachi</option>
+                        <option value="Lahore">Lahore</option>
+                        <option value="Islamabad">Islamabad</option>
+                        <option value="Rawalpindi">Rawalpindi</option>
+                        <option value="Faisalabad">Faisalabad</option>
+                        <option value="Multan">Multan</option>
+                        <option value="Peshawar">Peshawar</option>
+                        <option value="Quetta">Quetta</option>
+                        <option value="Sialkot">Sialkot</option>
+                        <option value="Gujranwala">Gujranwala</option>
+                        <option value="Hyderabad">Hyderabad</option>
+                        <option value="Sargodha">Sargodha</option>
+                        <option value="Bahawalpur">Bahawalpur</option>
+                        <option value="Sukkur">Sukkur</option>
+                      </select>
                     </div>
                     <div>
                       <label className="block text-[10px] font-bold text-stone-500 uppercase tracking-wider mb-1.5">Postal Code</label>
                       <input
                         type="text"
-                        required
-                        placeholder="10001"
+                        placeholder="e.g. 75500"
                         value={postalCode}
                         onChange={(e) => setPostalCode(e.target.value)}
-                        className="w-full rounded-xl border border-stone-200 px-3.5 py-2.5 text-xs focus:border-stone-900 focus:outline-none"
+                        className="w-full rounded-xl border border-stone-200 px-3.5 py-2.5 text-xs focus:border-stone-900 focus:outline-none font-mono"
                       />
                     </div>
                   </div>
 
-                  <div>
-                    <label className="block text-[10px] font-bold text-stone-500 uppercase tracking-wider mb-1.5">Country</label>
-                    <select
-                      value={country}
-                      onChange={(e) => setCountry(e.target.value)}
-                      className="w-full rounded-xl border border-stone-200 px-3.5 py-2.5 text-xs focus:border-stone-900 focus:outline-none"
-                    >
-                      <option>United States</option>
-                      <option>Canada</option>
-                      <option>United Kingdom</option>
-                      <option>Germany</option>
-                      <option>Australia</option>
-                    </select>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-[10px] font-bold text-stone-500 uppercase tracking-wider mb-1.5">Province *</label>
+                      <select
+                        value={province}
+                        onChange={(e) => setProvince(e.target.value)}
+                        className="w-full rounded-xl border border-stone-200 px-3.5 py-2.5 text-xs focus:border-stone-900 focus:outline-none bg-white cursor-pointer"
+                      >
+                        <option value="Punjab">Punjab</option>
+                        <option value="Sindh">Sindh</option>
+                        <option value="Khyber Pakhtunkhwa">Khyber Pakhtunkhwa (KPK)</option>
+                        <option value="Balochistan">Balochistan</option>
+                        <option value="Islamabad Capital Territory">Islamabad Capital Territory</option>
+                        <option value="Gilgit-Baltistan">Gilgit-Baltistan</option>
+                        <option value="Azad Kashmir">Azad Kashmir</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold text-stone-500 uppercase tracking-wider mb-1.5">Country</label>
+                      <input
+                        type="text"
+                        disabled
+                        value={country}
+                        className="w-full rounded-xl border border-stone-200 bg-stone-50 px-3.5 py-2.5 text-xs focus:outline-none text-stone-500 font-semibold"
+                      />
+                    </div>
                   </div>
 
                   <button
                     onClick={handleNextStep}
-                    disabled={!email || !fullName || !address || !city || !postalCode}
-                    className="w-full flex items-center justify-center gap-2 rounded-xl bg-stone-950 py-3 px-4 text-xs font-bold text-white shadow-md hover:bg-stone-850 transition-all active:scale-98 disabled:opacity-50 disabled:pointer-events-none mt-6"
+                    disabled={!email || !fullName || !address || !city || !phone}
+                    className="w-full flex items-center justify-center gap-2 rounded-xl bg-stone-950 py-3 px-4 text-xs font-bold text-white shadow-md hover:bg-stone-850 transition-all active:scale-98 disabled:opacity-50 disabled:pointer-events-none mt-6 cursor-pointer"
                   >
-                    Continue to Payment <ArrowRight className="h-3.5 w-3.5" />
+                    Continue to Payment Method <ArrowRight className="h-3.5 w-3.5" />
                   </button>
                 </div>
               )}
 
               {/* STEP 2: PAYMENT */}
               {step === 2 && (
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-[10px] font-bold text-stone-500 uppercase tracking-wider mb-1.5">Cardholder Name</label>
-                    <input
-                      type="text"
-                      required
-                      placeholder="LIAM PARKER"
-                      value={cardName}
-                      onChange={(e) => setCardName(e.target.value)}
-                      className="w-full rounded-xl border border-stone-200 px-3.5 py-2.5 text-xs focus:border-stone-900 focus:outline-none"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-[10px] font-bold text-stone-500 uppercase tracking-wider mb-1.5">Card Number</label>
-                    <div className="relative">
-                      <input
-                        type="text"
-                        required
-                        maxLength={19}
-                        placeholder="4111 2222 3333 4444"
-                        value={cardNumber}
-                        onChange={(e) => setCardNumber(e.target.value.replace(/\s?/g, '').replace(/(\d{4})/g, 'PKR 1 ').trim())}
-                        className="w-full rounded-xl border border-stone-200 pl-10 pr-3.5 py-2.5 text-xs focus:border-stone-900 focus:outline-none"
-                      />
-                      <CreditCard className="absolute left-3 top-3 h-4 w-4 text-stone-400" />
+                <div className="space-y-6">
+                  <div className="rounded-2xl border-2 border-stone-900 bg-stone-50/50 p-5 flex items-start gap-4">
+                    <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-stone-900 text-white mt-0.5">
+                      <Check className="h-3.5 w-3.5 stroke-[3]" />
+                    </div>
+                    <div className="text-xs">
+                      <strong className="block text-stone-900 text-sm uppercase tracking-wider font-semibold">Cash on Delivery (COD)</strong>
+                      <p className="text-stone-500 mt-1 leading-relaxed">
+                        Pay with cash upon receipt of your package at your shipping address. Our courier agent will contact you on your mobile number prior to delivery.
+                      </p>
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-[10px] font-bold text-stone-500 uppercase tracking-wider mb-1.5">Expiry Date</label>
-                      <input
-                        type="text"
-                        required
-                        placeholder="MM/YY"
-                        maxLength={5}
-                        value={cardExpiry}
-                        onChange={(e) => setCardExpiry(e.target.value)}
-                        className="w-full rounded-xl border border-stone-200 px-3.5 py-2.5 text-xs focus:border-stone-900 focus:outline-none"
-                      />
+                  <div className="rounded-2xl border border-stone-150 p-5 bg-white space-y-3.5 text-xs">
+                    <h4 className="font-bold text-stone-900 uppercase text-[10px] tracking-wider">COD Billing Summary</h4>
+                    <div className="flex justify-between text-stone-600">
+                      <span>Order Value</span>
+                      <span className="font-mono">PKR {(subtotal - discountAmount).toFixed(2)}</span>
                     </div>
-                    <div>
-                      <label className="block text-[10px] font-bold text-stone-500 uppercase tracking-wider mb-1.5">CVC / CVV</label>
-                      <input
-                        type="password"
-                        required
-                        maxLength={3}
-                        placeholder="•••"
-                        value={cardCvc}
-                        onChange={(e) => setCardCvc(e.target.value.replace(/\D/g, ""))}
-                        className="w-full rounded-xl border border-stone-200 px-3.5 py-2.5 text-xs focus:border-stone-900 focus:outline-none"
-                      />
+                    <div className="flex justify-between text-stone-600">
+                      <span>Delivery Cost</span>
+                      <span className="font-mono">{shippingCost === 0 ? "Free" : `PKR ${shippingCost.toFixed(2)}`}</span>
+                    </div>
+                    <div className="flex justify-between text-stone-900 font-bold border-t border-stone-100 pt-3 text-sm">
+                      <span>Amount Due on Delivery</span>
+                      <span className="font-mono">PKR {total.toFixed(2)}</span>
                     </div>
                   </div>
 
                   <div className="flex gap-3 mt-6">
                     <button
                       onClick={handlePrevStep}
-                      className="flex items-center justify-center gap-1.5 rounded-xl border border-stone-200 px-4 py-3 text-xs font-bold text-stone-700 hover:bg-stone-50 transition-all active:scale-95"
+                      className="flex items-center justify-center gap-1.5 rounded-xl border border-stone-200 px-4 py-3 text-xs font-bold text-stone-700 hover:bg-stone-50 transition-all active:scale-95 cursor-pointer"
                     >
                       <ArrowLeft className="h-3.5 w-3.5" /> Back
                     </button>
                     <button
                       onClick={handleNextStep}
-                      disabled={!cardName || !cardNumber || !cardExpiry || !cardCvc}
-                      className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-stone-950 py-3 text-xs font-bold text-white hover:bg-stone-850 transition-all active:scale-98 disabled:opacity-50"
+                      className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-stone-950 py-3 text-xs font-bold text-white hover:bg-stone-850 transition-all active:scale-98 cursor-pointer"
                     >
                       Continue to Summary <ArrowRight className="h-3.5 w-3.5" />
                     </button>
@@ -316,17 +358,22 @@ export default function CheckoutModal({
                   <div className="rounded-xl border border-stone-100 bg-stone-50 p-4 space-y-3.5 text-xs text-stone-600">
                     <div>
                       <h4 className="font-bold text-stone-900 uppercase text-[10px] tracking-wider mb-1">Shipping Details</h4>
-                      <p className="font-semibold text-stone-800">{fullName}</p>
-                      <p>{address}, {city}, {postalCode}</p>
+                      <p className="font-semibold text-stone-850">{fullName}</p>
+                      <p className="mt-1">{address}</p>
+                      {landmark && <p className="text-stone-500 font-medium">Landmark: {landmark}</p>}
+                      <p>{city}, {province} {postalCode && `- ${postalCode}`}</p>
                       <p>{country}</p>
-                      <p className="mt-1 text-stone-400">{email}</p>
+                      <div className="mt-2 text-[10px] text-stone-400 font-medium space-y-0.5">
+                        <p>Email: {email}</p>
+                        <p className="font-mono">Phone: {phone}</p>
+                      </div>
                     </div>
 
                     <div className="border-t border-stone-200/60 pt-3 flex items-center gap-2 text-stone-800">
-                      <CreditCard className="h-4 w-4 text-stone-500" />
+                      <Truck className="h-4 w-4 text-stone-500" />
                       <div>
                         <h4 className="font-bold text-stone-900 uppercase text-[10px] tracking-wider">Payment Method</h4>
-                        <p className="text-[11px]">Visa ending in •••• {cardNumber.slice(-4)}</p>
+                        <p className="text-[11px] font-semibold text-emerald-700">Cash on Delivery (COD)</p>
                       </div>
                     </div>
                   </div>
@@ -353,9 +400,10 @@ export default function CheckoutModal({
                     </button>
                     <button
                       onClick={handlePlaceOrder}
-                      className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-stone-950 py-3 text-xs font-bold text-white shadow-lg transition-all hover:bg-stone-850 active:scale-98"
+                      disabled={isSubmitting}
+                      className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-stone-950 py-3 text-xs font-bold text-white shadow-lg transition-all hover:bg-stone-850 active:scale-98 disabled:opacity-50"
                     >
-                      Place Secure Order (PKR {total.toFixed(2)})
+                      {isSubmitting ? "Placing Order..." : `Place Secure Order (PKR ${total.toFixed(2)})`}
                     </button>
                   </div>
                 </div>

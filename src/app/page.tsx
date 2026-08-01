@@ -61,6 +61,10 @@ export default function Page() {
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const [activeOrderTrack, setActiveOrderTrack] = useState<Order | null>(null);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [isTrackingModalOpen, setIsTrackingModalOpen] = useState(false);
+  const [trackSearchId, setTrackSearchId] = useState("");
+  const [trackingError, setTrackingError] = useState("");
+  const [isSearchingTrack, setIsSearchingTrack] = useState(false);
 
   const { user } = useAuth();
 
@@ -277,6 +281,29 @@ export default function Page() {
     }, 1500);
   };
 
+  const handleTrackOrderSearch = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!trackSearchId.trim()) return;
+    setTrackingError("");
+    setIsSearchingTrack(true);
+    try {
+      const res = await fetch(`/api/v1/orders/${trackSearchId.trim().toUpperCase()}`);
+      if (!res.ok) {
+        throw new Error("Order not found or invalid Reference ID.");
+      }
+      const data = await res.json();
+      if (data.success && data.order) {
+        setActiveOrderTrack(data.order);
+        setIsTrackingModalOpen(false);
+        setTrackSearchId("");
+      }
+    } catch (err: any) {
+      setTrackingError(err.message || "Failed to search order.");
+    } finally {
+      setIsSearchingTrack(false);
+    }
+  };
+
   const handleNewsletterSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newsletterEmail.trim()) return;
@@ -359,16 +386,14 @@ export default function Page() {
           <div className="flex items-center gap-4">
             
             {/* Open Orders History button */}
-            {orders.length > 0 && (
-              <button
-                onClick={() => setActiveOrderTrack(orders[0])}
-                className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-stone-500 hover:text-stone-900 transition-colors"
-                title="Track Last Order"
-              >
-                <Truck className="h-4.5 w-4.5" />
-                <span className="hidden sm:inline">Track</span>
-              </button>
-            )}
+            <button
+              onClick={() => setIsTrackingModalOpen(true)}
+              className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-stone-500 hover:text-stone-900 transition-colors cursor-pointer"
+              title="Track Order"
+            >
+              <Truck className="h-4.5 w-4.5" />
+              <span className="hidden sm:inline">Track Order</span>
+            </button>
 
             {/* User Account / Sign In Button */}
             <button
@@ -935,6 +960,82 @@ export default function Page() {
         isOpen={isAuthModalOpen}
         onClose={() => setIsAuthModalOpen(false)}
       />
+
+      {/* ORDER TRACKING SEARCH MODAL */}
+      <AnimatePresence>
+        {isTrackingModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => {
+                setIsTrackingModalOpen(false);
+                setTrackingError("");
+                setTrackSearchId("");
+              }}
+              className="absolute inset-0 bg-stone-900/40 backdrop-blur-xs"
+            />
+
+            {/* Modal Container */}
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="relative z-10 w-full max-w-md rounded-3xl bg-white border border-stone-200 p-6 shadow-2xl space-y-4"
+            >
+              <div className="flex justify-between items-center border-b border-stone-100 pb-3">
+                <div className="flex items-center gap-2">
+                  <Truck className="h-5 w-5 text-stone-900" />
+                  <h3 className="text-sm font-bold uppercase tracking-wider text-stone-900">
+                    Track Your Order
+                  </h3>
+                </div>
+                <button
+                  onClick={() => {
+                    setIsTrackingModalOpen(false);
+                    setTrackingError("");
+                    setTrackSearchId("");
+                  }}
+                  className="text-stone-400 hover:text-stone-700"
+                >
+                  <X className="h-4.5 w-4.5" />
+                </button>
+              </div>
+
+              <form onSubmit={handleTrackOrderSearch} className="space-y-4">
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-stone-500">
+                    Order Reference ID
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. MIN-123456"
+                    value={trackSearchId}
+                    onChange={(e) => setTrackSearchId(e.target.value)}
+                    className="w-full rounded-xl border border-stone-200 px-3.5 py-2.5 text-xs focus:border-stone-900 focus:outline-none uppercase font-mono font-semibold"
+                  />
+                </div>
+
+                {trackingError && (
+                  <p className="text-xs text-red-600 font-medium">{trackingError}</p>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={isSearchingTrack}
+                  className="w-full flex items-center justify-center gap-2 rounded-xl bg-stone-950 py-3 text-xs font-bold uppercase tracking-wider text-white shadow-md hover:bg-stone-850 transition-all active:scale-98 disabled:opacity-50"
+                >
+                  {isSearchingTrack ? "Searching..." : "Track Package"}
+                  <ArrowRight className="h-4 w-4" />
+                </button>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

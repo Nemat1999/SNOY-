@@ -169,7 +169,7 @@ export default function DiscountsTab({ coupons, setCoupons, triggerAlert }: Disc
                       </button>
                       <button
                         onClick={() => handleDelete(c.code)}
-                        className="p-1.5 rounded-lg border border-stone-200 hover:border-stone-400 hover:bg-stone-50 text-stone-500 hover:text-red-650 hover:border-red-200 cursor-pointer transition-all"
+                        className="p-1.5 rounded-lg border border-stone-200 hover:border-stone-400 hover:bg-stone-50 text-stone-500 hover:text-red-600 hover:border-red-200 cursor-pointer transition-all"
                         title="Remove Coupon"
                       >
                         <Trash2 className="h-4 w-4 text-red-500" />

@@ -47,7 +47,7 @@ async function verifyProductCRUD() {
       featured: true,
       status: 'active'
     });
-    console.log(`✅ Product Created: [${newProduct.id}] ${newProduct.name}`);
+    console.log(`✅ Product Created: [${(newProduct as any).id}] ${(newProduct as any).name}`);
 
     // 3. UPDATE Product
     console.log('\n3️⃣ UPDATE: Updating price and stock of the created product...');

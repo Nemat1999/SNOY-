@@ -218,7 +218,7 @@ export default function FinanceTab({
                   <td className="py-3.5 px-4 text-right">
                     <button
                       onClick={() => handleDelete(e.id)}
-                      className="p-1.5 rounded-lg border border-stone-200 hover:border-red-350 hover:bg-red-50 text-stone-500 hover:text-red-650 transition-all cursor-pointer active:scale-95"
+                      className="p-1.5 rounded-lg border border-stone-200 hover:border-red-300 hover:bg-red-50 text-stone-500 hover:text-red-600 transition-all cursor-pointer active:scale-95"
                       title="Remove Record"
                     >
                       <Trash2 className="h-3.5 w-3.5" />

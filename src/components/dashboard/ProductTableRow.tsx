@@ -79,7 +79,7 @@ export default function ProductTableRow({ product: p, categories, onView, onEdit
           <Tooltip content="Delete Product">
             <button
               onClick={() => onDelete(p.id)}
-              className="p-2 rounded-lg border border-stone-200 hover:border-red-300 hover:bg-red-50 text-stone-600 hover:text-red-650 transition-all cursor-pointer active:scale-95"
+              className="p-2 rounded-lg border border-stone-200 hover:border-red-300 hover:bg-red-50 text-stone-600 hover:text-red-600 transition-all cursor-pointer active:scale-95"
             >
               <Trash2 className="h-3.5 w-3.5" />
             </button>

@@ -16,6 +16,7 @@ import CategoryModalForm from "./CategoryModalForm";
 import CategoryProductsModal from "./CategoryProductsModal";
 import SearchBar from "../SearchBar";
 import Tooltip from "../ui/Tooltip";
+import DeleteConfirmModal from "../ui/DeleteConfirmModal";
 
 interface CategoriesTabProps {
   categories: CategoryItem[];
@@ -41,6 +42,8 @@ export default function CategoriesTab({
   const [selectedCategoryView, setSelectedCategoryView] =
     useState<CategoryItem | null>(null);
   const [isProductsModalOpen, setIsProductsModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [categoryToDelete, setCategoryToDelete] = useState<CategoryItem | null>(null);
 
   // Fetch from API on mount
   useEffect(() => {
@@ -79,7 +82,7 @@ export default function CategoriesTab({
     setIsFormOpen(true);
   };
 
-  const handleDelete = async (categoryId: string, categoryName: string) => {
+  const handleDelete = (categoryId: string, categoryName: string) => {
     const hasProducts = liveProducts.some(
       (p) =>
         p.category?.toLowerCase() === categoryName.toLowerCase() ||
@@ -94,24 +97,29 @@ export default function CategoriesTab({
       return;
     }
 
-    if (
-      confirm(`Are you sure you want to delete category "${categoryName}"?`)
-    ) {
-      try {
-        const res = await fetch(`/api/v1/categories/${categoryId}`, {
-          method: "DELETE",
-        });
-        if (res.ok) {
-          setCategories((prev) => prev.filter((c) => c.id !== categoryId));
-          triggerAlert("Category removed successfully.", "info");
-        } else {
-          const data = await res.json();
-          alert(data.error || "Failed to delete category");
-        }
-      } catch (err) {
-        console.error("Backend delete error:", err);
-        alert("Network error. Could not delete category.");
+    const cat = categories.find((c) => c.id === categoryId);
+    if (cat) {
+      setCategoryToDelete(cat);
+      setIsDeleteModalOpen(true);
+    }
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!categoryToDelete) return;
+    try {
+      const res = await fetch(`/api/v1/categories/${categoryToDelete.id}`, {
+        method: "DELETE",
+      });
+      if (res.ok) {
+        setCategories((prev) => prev.filter((c) => c.id !== categoryToDelete.id));
+        triggerAlert("Category removed successfully.", "info");
+      } else {
+        const data = await res.json();
+        alert(data.error || "Failed to delete category");
       }
+    } catch (err) {
+      console.error("Backend delete error:", err);
+      alert("Network error. Could not delete category.");
     }
   };
 
@@ -287,7 +295,7 @@ export default function CategoriesTab({
                     <Tooltip content="Delete Category">
                       <button
                         onClick={() => handleDelete(c.id, c.name)}
-                        className="p-2 rounded-xl border border-stone-200 hover:border-red-300 hover:bg-red-50 text-stone-600 hover:text-red-650 transition-all cursor-pointer text-xs font-semibold flex items-center gap-1.5 active:scale-95"
+                        className="p-2 rounded-xl border border-stone-200 hover:border-red-300 hover:bg-red-50 text-stone-600 hover:text-red-600 transition-all cursor-pointer text-xs font-semibold flex items-center gap-1.5 active:scale-95"
                       >
                         <Trash2 className="h-3.5 w-3.5" /> Delete
                       </button>
@@ -323,6 +331,18 @@ export default function CategoriesTab({
         onClose={() => setIsProductsModalOpen(false)}
         category={selectedCategoryView}
         products={liveProducts}
+      />
+
+      <DeleteConfirmModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => {
+          setIsDeleteModalOpen(false);
+          setCategoryToDelete(null);
+        }}
+        onConfirm={handleConfirmDelete}
+        title="Delete Category"
+        message="Are you sure you want to permanently delete this category? Active showroom products assigned to this category must be cleared first."
+        itemName={categoryToDelete?.name}
       />
     </div>
   );

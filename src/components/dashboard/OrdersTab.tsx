@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
-import { Eye, Truck, Check, Clock, X, ArrowRight, User } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { Eye, Truck, Check, Clock, X, ArrowRight, User, Loader2 } from "lucide-react";
 import { Order } from "../../types";
 import { DEFAULT_ORDERS } from "../../data";
 
@@ -13,23 +13,77 @@ interface OrdersTabProps {
 
 export default function OrdersTab({ orders, setOrders, triggerAlert }: OrdersTabProps) {
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handlePopulateDemo = () => {
-    setOrders(DEFAULT_ORDERS);
-    triggerAlert("Demo orders populated successfully.", "success");
+  const fetchOrders = async () => {
+    setIsLoading(true);
+    try {
+      const res = await fetch("/api/v1/orders");
+      const data = await res.json();
+      if (data.success && data.orders) {
+        setOrders(data.orders);
+      }
+    } catch (err) {
+      console.error("Error fetching orders:", err);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleUpdateStatus = (orderId: string, newStatus: Order["status"]) => {
-    setOrders((prevOrders) =>
-      prevOrders.map((o) => (o.id === orderId ? { ...o, status: newStatus } : o))
-    );
-    
-    // Update active modal details too if it is open
-    if (selectedOrder && selectedOrder.id === orderId) {
-      setSelectedOrder((prev) => (prev ? { ...prev, status: newStatus } : null));
-    }
+  useEffect(() => {
+    fetchOrders();
+  }, []);
 
-    triggerAlert(`Order status updated to ${newStatus}.`);
+  const handlePopulateDemo = async () => {
+    try {
+      setIsLoading(true);
+      for (const order of DEFAULT_ORDERS) {
+        if (orders.some((o) => o.id === order.id)) continue;
+        await fetch("/api/v1/orders", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(order),
+        });
+      }
+      await fetchOrders();
+      triggerAlert("Demo orders populated successfully.", "success");
+    } catch (err) {
+      console.error("Error populating demo orders:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleUpdateStatus = async (orderId: string, newStatus: Order["status"]) => {
+    try {
+      const res = await fetch(`/api/v1/orders/${orderId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: newStatus }),
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || "Failed to update order status");
+      }
+
+      const resData = await res.json();
+      const updatedOrder = resData.order;
+
+      setOrders((prevOrders) =>
+        prevOrders.map((o) => (o.id === orderId ? updatedOrder : o))
+      );
+
+      // Update active modal details too if it is open
+      if (selectedOrder && selectedOrder.id === orderId) {
+        setSelectedOrder(updatedOrder);
+      }
+
+      triggerAlert(`Order status updated to ${newStatus}.`, "success");
+    } catch (err: any) {
+      console.error("Error updating order status:", err);
+      alert(err.message || "Something went wrong while updating order status.");
+    }
   };
 
   return (
@@ -112,7 +166,16 @@ export default function OrdersTab({ orders, setOrders, triggerAlert }: OrdersTab
                 </tr>
               ))}
 
-              {orders.length === 0 && (
+               {isLoading ? (
+                <tr>
+                  <td colSpan={6} className="py-16 text-center text-stone-500 font-medium">
+                    <div className="flex flex-col items-center justify-center max-w-sm mx-auto p-6 space-y-2">
+                      <Loader2 className="h-6 w-6 animate-spin text-stone-900" />
+                      <p className="text-stone-400 mt-1 leading-normal text-xs">Loading showroom orders...</p>
+                    </div>
+                  </td>
+                </tr>
+              ) : orders.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="py-16 text-center text-stone-500 font-medium">
                     <div className="flex flex-col items-center justify-center max-w-sm mx-auto p-6 space-y-4">
@@ -134,7 +197,7 @@ export default function OrdersTab({ orders, setOrders, triggerAlert }: OrdersTab
                     </div>
                   </td>
                 </tr>
-              )}
+              ) : null}
             </tbody>
           </table>
         </div>
